@@ -44,7 +44,7 @@ Run the installer script as your normal user (never with `sudo`):
 curl -fsSL https://raw.githubusercontent.com/GwilliamBR/shell/main/scripts/install.sh | bash
 ```
 
-The installer checks for `pop-launcher`, installs the extension, enables `pop-shell@system76.com`, and offers to apply Pop Shell's recommended GNOME keyboard shortcuts via `scripts/configure.sh` when run from a local repository clone.
+The installer checks for `pop-launcher`, installs the extension (from the local checkout, latest GitHub release zip, or by cloning and building from source when no release exists yet), enables `pop-shell@system76.com`, and offers to apply Pop Shell's recommended GNOME keyboard shortcuts via `scripts/configure.sh` when installing from a local checkout or remote source fallback. Set `POP_SHELL_BRANCH` to clone and build a specific branch directly.
 
 ### Install From Source
 

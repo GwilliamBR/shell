@@ -18,6 +18,15 @@ export const mockState = {
     env: new Map<string, string>([['XDG_SESSION_TYPE', 'wayland']]),
     waylandCompositor: undefined as (() => boolean) | undefined,
     logs: [] as Array<string>,
+    gsettings: new Map<
+        string,
+        {
+            keys: Array<string>;
+            strings?: Record<string, string>;
+            booleans?: Record<string, boolean>;
+            uints?: Record<string, number>;
+        }
+    >(),
 };
 
 class MockFile {
@@ -25,6 +34,14 @@ class MockFile {
 
     constructor(filePath: string) {
         this.filePath = filePath;
+    }
+
+    get_path(): string {
+        return this.filePath;
+    }
+
+    get_child(child: string): MockFile {
+        return new MockFile(path.join(this.filePath, child));
     }
 
     query_exists(): boolean {
@@ -102,12 +119,61 @@ export const GLib = {
     },
 };
 
+class MockSettings {
+    private schemaId: string;
+
+    constructor(opts: { schema_id?: string; settings_schema?: { id: string } } = {}) {
+        const schemaId = opts.schema_id ?? opts.settings_schema?.id ?? '';
+        if (opts.schema_id && !mockState.gsettings.has(schemaId)) {
+            throw new Error(`Schema ${schemaId} not found`);
+        }
+        this.schemaId = schemaId;
+    }
+
+    list_keys(): Array<string> {
+        return mockState.gsettings.get(this.schemaId)?.keys ?? [];
+    }
+
+    get_string(key: string): string {
+        return mockState.gsettings.get(this.schemaId)?.strings?.[key] ?? '';
+    }
+
+    get_boolean(key: string): boolean {
+        return mockState.gsettings.get(this.schemaId)?.booleans?.[key] ?? false;
+    }
+
+    get_uint(key: string): number {
+        return mockState.gsettings.get(this.schemaId)?.uints?.[key] ?? 0;
+    }
+
+    connect(): number {
+        return 1;
+    }
+
+    disconnect(): void {}
+}
+
 export const Gio = {
     FileCreateFlags: { NONE: 0 },
     IOErrorEnum: { CANCELLED: 19 },
     SubprocessFlags: { STDIN_PIPE: 1, STDOUT_PIPE: 2 },
     File: {
-        new_for_path: (p: string) => new MockFile(p),
+        new_for_path: (p: string) => {
+            const base = new MockFile(p);
+            return Object.assign(base, {
+                get_child: (child: string) => new MockFile(path.join(p, child)),
+                get_path: () => p,
+            });
+        },
+    },
+    Settings: MockSettings,
+    SettingsSchemaSource: {
+        get_default: () => ({
+            lookup: (id: string) => ({ id }),
+        }),
+        new_from_directory: () => ({
+            lookup: (id: string) => ({ id }),
+        }),
     },
 };
 

@@ -6,7 +6,7 @@ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/
 
 import * as settings from './settings.js';
 import * as log from './log.js';
-import * as focus from './focus.js';
+import { FocusPosition } from './focus_position.js';
 
 interface AppWidgets {
     fullscreen_launcher: any;
@@ -80,10 +80,7 @@ function settings_dialog_new(): Gtk.Widget {
     });
 
     app.log_level.set_active(ext.log_level());
-    app.log_level.connect('changed', () => {
-        let active_id = app.log_level.get_active_id();
-        ext.set_log_level(active_id);
-    });
+    connect_uint_combo(app.log_level, (value) => ext.set_log_level(value));
 
     app.show_skip_taskbar.set_active(ext.show_skiptaskbar());
     app.show_skip_taskbar.connect('state-set', (_widget: any, state: boolean) => {
@@ -98,10 +95,7 @@ function settings_dialog_new(): Gtk.Widget {
     });
 
     app.mouse_cursor_focus_position.set_active(ext.mouse_cursor_focus_location());
-    app.mouse_cursor_focus_position.connect('changed', () => {
-        let active_id = app.mouse_cursor_focus_position.get_active_id();
-        ext.set_mouse_cursor_focus_location(active_id);
-    });
+    connect_uint_combo(app.mouse_cursor_focus_position, (value) => ext.set_mouse_cursor_focus_location(value));
 
     app.fullscreen_launcher.set_active(ext.fullscreen_launcher());
     app.fullscreen_launcher.connect('state-set', (_widget: any, state: boolean) => {
@@ -190,7 +184,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Widget] {
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
         show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
         mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
-        mouse_cursor_focus_position: build_combo(grid, 7, focus.FocusPosition, 'Mouse Cursor Focus Position'),
+        mouse_cursor_focus_position: build_combo(grid, 7, FocusPosition, 'Mouse Cursor Focus Position'),
         log_level: build_combo(grid, 8, log.LOG_LEVELS, 'Log Level'),
         max_window_width: number_entry(),
     };
@@ -275,4 +269,15 @@ function build_combo(grid: any, top_index: number, iter_enum: any, label: string
 
     grid.attach(combo, 1, top_index, 1, 1);
     return combo;
+}
+
+function connect_uint_combo(combo: Gtk.ComboBoxText, on_change: (value: number) => void) {
+    combo.connect('changed', () => {
+        const active_id = combo.get_active_id();
+        const parsed = active_id !== null ? parseInt(active_id, 10) : Number.NaN;
+        if (!Number.isNaN(parsed)) {
+            on_change(parsed);
+            Settings.sync();
+        }
+    });
 }

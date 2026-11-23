@@ -54,6 +54,41 @@ describe('GNOME Shell 48-51 compatibility', () => {
         }
     });
 
+    it('keeps prefs.ts and all transitive runtime imports free of compositor-only GI modules', () => {
+        const entry = path.join(ROOT, 'src/prefs.ts');
+        const visited = new Set<string>();
+        const queue: Array<string> = [entry];
+        const runtimeImportRe = /(?:(?:import|export)\s+[\s\S]*?\sfrom\s+|import\s*\(?\s*)['"]([^'"]+)['"]/gm;
+
+        while (queue.length > 0) {
+            const current = queue.pop()!;
+            if (visited.has(current)) continue;
+            visited.add(current);
+
+            const content = fs.readFileSync(current, 'utf8');
+            const runtimeContent = content.replace(/^\s*(?:import|export)\s+type\b[\s\S]*?;\s*$/gm, '');
+            const rel = path.relative(ROOT, current);
+
+            expect(runtimeContent, `${rel} pulls compositor-only GI modules into prefs`).not.toMatch(
+                /gi:\/\/(Meta|Shell|St|Clutter|Cogl|Mtk)\b/,
+            );
+            expect(runtimeContent, `${rel} imports Shell UI modules into prefs`).not.toMatch(
+                /resource:\/\/\/org\/gnome\/shell\//,
+            );
+
+            for (const match of runtimeContent.matchAll(runtimeImportRe)) {
+                const spec = match[1];
+                if (!spec.startsWith('./') && !spec.startsWith('../')) continue;
+                const resolved = path.resolve(path.dirname(current), spec.replace(/\.js$/, '.ts'));
+                if (fs.existsSync(resolved)) queue.push(resolved);
+            }
+        }
+
+        expect(visited.has(path.join(ROOT, 'src/settings.ts'))).toBe(true);
+        expect(visited.has(path.join(ROOT, 'src/focus_position.ts'))).toBe(true);
+        expect(visited.has(path.join(ROOT, 'src/geom.ts'))).toBe(false);
+    });
+
     it('consolidates styles into stylesheet.css and defines all launcher CSS classes', () => {
         expect(fs.existsSync(path.join(ROOT, 'stylesheet.css'))).toBe(true);
         expect(fs.existsSync(path.join(ROOT, 'dark.css'))).toBe(false);

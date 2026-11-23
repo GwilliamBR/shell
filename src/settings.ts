@@ -1,11 +1,16 @@
-// const Me = imports.misc.extensionUtils.getCurrentExtension();
 import Gio from 'gi://Gio';
 import { get_current_path } from './paths.js';
-import * as utils from './utils.js';
+import { is_valid_color } from './color.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 
 type Settings = Gio.Settings;
+
+function has_key(settings: Settings | null, key: string): settings is Settings {
+    if (!settings) return false;
+    const keys = settings.list_keys();
+    return Boolean(keys && keys.includes(key));
+}
 
 function settings_new_id(schema_id: string): Settings | null {
     try {
@@ -67,6 +72,7 @@ export class ExtensionSettings {
     int: Settings | null = settings_new_id('org.gnome.desktop.interface');
     mutter: Settings | null = settings_new_id('org.gnome.mutter');
     shell: Settings | null = settings_new_id('org.gnome.shell.extensions.user-theme');
+    a11y: Settings | null = settings_new_id('org.gnome.desktop.a11y.interface');
 
     // Getters
 
@@ -104,7 +110,7 @@ export class ExtensionSettings {
 
     hint_color_rgba() {
         let rgba = this.ext.get_string(HINT_COLOR_RGBA);
-        let valid_color = utils.is_valid_color(rgba);
+        let valid_color = is_valid_color(rgba);
 
         if (!valid_color) {
             return DEFAULT_RGBA_COLOR;
@@ -114,10 +120,7 @@ export class ExtensionSettings {
     }
 
     get_system_accent_name(): string {
-        if (!this.int) return 'blue';
-
-        const keys = this.int.list_keys();
-        if (keys && keys.includes('accent-color')) {
+        if (has_key(this.int, 'accent-color')) {
             return this.int.get_string('accent-color') || 'blue';
         }
         return 'blue';
@@ -128,13 +131,8 @@ export class ExtensionSettings {
     }
 
     is_dark(): boolean {
-        if (this.int) {
-            const keys = this.int.list_keys();
-            if (keys && keys.includes('color-scheme')) {
-                const scheme = this.int.get_string('color-scheme');
-                if (scheme === 'prefer-dark') return true;
-                if (scheme === 'prefer-light') return false;
-            }
+        if (has_key(this.int, 'color-scheme')) {
+            return this.int.get_string('color-scheme') === 'prefer-dark';
         }
 
         const theme = this.theme().toLowerCase();
@@ -142,6 +140,10 @@ export class ExtensionSettings {
     }
 
     is_high_contrast(): boolean {
+        if (has_key(this.a11y, 'high-contrast')) {
+            return this.a11y.get_boolean('high-contrast');
+        }
+
         return this.theme().toLowerCase() === 'highcontrast';
     }
 
@@ -224,7 +226,7 @@ export class ExtensionSettings {
     }
 
     set_hint_color_rgba(rgba: string) {
-        let valid_color = utils.is_valid_color(rgba);
+        let valid_color = is_valid_color(rgba);
 
         if (valid_color) {
             this.ext.set_string(HINT_COLOR_RGBA, rgba);

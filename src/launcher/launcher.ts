@@ -7,6 +7,7 @@ import type { Ext } from '../extension.js';
 import type * as JsonIPC from './protocol.js';
 
 import Clutter from 'gi://Clutter';
+import type Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GioUnix from 'gi://GioUnix?version=2.0';
 import Shell from 'gi://Shell';
@@ -31,7 +32,7 @@ export class Launcher extends search_dialog.SearchDialog {
     private append_id: number | null = null;
     private active_menu: PopupMenu.PopupMenu | null = null;
     private current_accent_class = '';
-    private settings_signal_ids: number[] = [];
+    private settings_signals: Array<[Gio.Settings, number]> = [];
 
     constructor(ext: Ext) {
         super();
@@ -43,17 +44,10 @@ export class Launcher extends search_dialog.SearchDialog {
 
         this.sync_appearance();
 
-        if (this.ext.settings.int) {
-            const int = this.ext.settings.int;
-            const keys = int.list_keys();
-            this.settings_signal_ids.push(int.connect('changed::gtk-theme', () => this.sync_appearance()));
-            if (keys.includes('color-scheme')) {
-                this.settings_signal_ids.push(int.connect('changed::color-scheme', () => this.sync_appearance()));
-            }
-            if (keys.includes('accent-color')) {
-                this.settings_signal_ids.push(int.connect('changed::accent-color', () => this.sync_appearance()));
-            }
-        }
+        this.connect_setting(this.ext.settings.int, 'gtk-theme');
+        this.connect_setting(this.ext.settings.int, 'color-scheme');
+        this.connect_setting(this.ext.settings.int, 'accent-color');
+        this.connect_setting(this.ext.settings.a11y, 'high-contrast');
 
         this.cancel = () => {
             ext.overlay.visible = false;
@@ -186,16 +180,19 @@ export class Launcher extends search_dialog.SearchDialog {
     }
 
     destroy() {
-        if (this.ext.settings.int) {
-            for (const id of this.settings_signal_ids) {
-                this.ext.settings.int.disconnect(id);
-            }
+        for (const [settings, id] of this.settings_signals) {
+            settings.disconnect(id);
         }
-        this.settings_signal_ids = [];
+        this.settings_signals = [];
         this.stop_service();
         this.remove_pending_append();
         for (const { menu } of this.results_array) menu.destroy();
         super.destroy();
+    }
+
+    private connect_setting(settings: Gio.Settings | null, key: string) {
+        if (!settings || !settings.list_keys().includes(key)) return;
+        this.settings_signals.push([settings, settings.connect(`changed::${key}`, () => this.sync_appearance())]);
     }
 
     private start_service(): boolean {

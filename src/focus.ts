@@ -1,15 +1,8 @@
 import * as Geom from './geom.js';
+export { FocusPosition } from './focus_position.js';
 
 import type { ShellWindow } from './window.js';
 import type { Ext } from './extension.js';
-
-export enum FocusPosition {
-    TopLeft = 'Top Left',
-    TopRight = 'Top Right',
-    BottomLeft = 'Bottom Left',
-    BottomRight = 'Bottom Right',
-    Center = 'Center',
-}
 
 export class FocusSelector {
     select(

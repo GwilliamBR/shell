@@ -64,9 +64,9 @@ curl -fsSL https://raw.githubusercontent.com/GwilliamBR/shell/main/scripts/insta
 What `scripts/install.sh` does:
 
 1. Checks whether `pop-launcher` is present (and offers distro package or Cargo/Just source setup when available).
-2. Builds and installs from your local clone (if run inside a cloned repo), or downloads the latest release `.zip` from `GwilliamBR/shell` and runs `gnome-extensions install --force`.
+2. Builds and installs from your local clone (if run inside a cloned repo), downloads the latest release `.zip` from `GwilliamBR/shell`, or automatically clones and builds from source (`POP_SHELL_BRANCH` selects a branch) when no release is published yet.
 3. Enables `pop-shell@system76.com`.
-4. If run from a cloned repo with `scripts/configure.sh`, optionally asks `[y/N]` to apply recommended GNOME keyboard shortcuts.
+4. Optionally asks `[y/N]` to apply recommended GNOME keyboard shortcuts via `scripts/configure.sh`.
 
 ### Option B: Build From Source
 

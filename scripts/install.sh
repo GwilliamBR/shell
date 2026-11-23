@@ -3,6 +3,7 @@ set -euo pipefail
 
 UUID="pop-shell@system76.com"
 REPO="${POP_SHELL_REPO:-GwilliamBR/shell}"
+BRANCH="${POP_SHELL_BRANCH:-}"
 SCRIPT_PATH="${BASH_SOURCE[0]:-}"
 WORK_TMP_DIR=""
 
@@ -13,18 +14,34 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Resolve repository root when invoked as a script file inside the repo
+if [[ ! "$REPO" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
+    echo "Error: Invalid POP_SHELL_REPO value '$REPO'. Expected 'owner/repo'."
+    exit 1
+fi
+
+if [ -n "$BRANCH" ] && { [[ "$BRANCH" == -* ]] || [[ ! "$BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]; }; then
+    echo "Error: Invalid POP_SHELL_BRANCH value '$BRANCH'."
+    exit 1
+fi
+
+is_pop_shell_repo() {
+    local dir="$1"
+    [ -f "$dir/metadata.json" ] && [ -f "$dir/package.json" ] && grep -q "\"uuid\":[[:space:]]*\"$UUID\"" "$dir/metadata.json"
+}
+
+# Resolve repository root when invoked as a script file or from inside a repo checkout
+REPO_ROOT=""
 if [ -n "$SCRIPT_PATH" ]; then
     SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
-    if [ -f "$SCRIPT_DIR/metadata.json" ] && [ -f "$SCRIPT_DIR/package.json" ]; then
+    if is_pop_shell_repo "$SCRIPT_DIR"; then
         REPO_ROOT="$SCRIPT_DIR"
-    elif [ -f "$SCRIPT_DIR/../metadata.json" ] && [ -f "$SCRIPT_DIR/../package.json" ]; then
+    elif is_pop_shell_repo "$SCRIPT_DIR/.."; then
         REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-    else
-        REPO_ROOT=""
     fi
-else
-    REPO_ROOT=""
+fi
+
+if [ -z "$REPO_ROOT" ] && is_pop_shell_repo "$PWD"; then
+    REPO_ROOT="$PWD"
 fi
 
 # Ensure not running as root
@@ -45,30 +62,35 @@ prompt_user() {
         read -r -p "$question " reply <&3 || true
         exec 3<&-
     else
-        if [ "$default_yes" = true ]; then
-            return 0
-        fi
-        return 1
+        [ "$default_yes" = true ]
+        return $?
     fi
 
     if [ "$default_yes" = true ]; then
         case "$reply" in
-            [nN][oO]|[nN])
-                return 1
-                ;;
-            *)
-                return 0
-                ;;
+            [nN][oO]|[nN]) return 1 ;;
+            *) return 0 ;;
         esac
-    else
-        case "$reply" in
-            [yY][eE][sS]|[yY])
-                return 0
-                ;;
-            *)
-                return 1
-                ;;
-        esac
+    fi
+
+    case "$reply" in
+        [yY][eE][sS]|[yY]) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+require_build_tools() {
+    local missing=()
+    for cmd in git node pnpm make zip glib-compile-schemas gnome-extensions; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            missing+=("$cmd")
+        fi
+    done
+
+    if [ "${#missing[@]}" -gt 0 ]; then
+        echo "Error: Building from source requires: ${missing[*]}"
+        echo "Install the missing tools (see INSTALL.md) and try again."
+        exit 1
     fi
 }
 
@@ -82,7 +104,7 @@ build_pop_launcher_from_source() {
     WORK_TMP_DIR=$(mktemp -d)
     (
         cd "$WORK_TMP_DIR"
-        git clone --depth 1 https://github.com/pop-os/launcher.git
+        git clone --depth 1 -- https://github.com/pop-os/launcher.git
         cd launcher
         just build-release
         just install
@@ -153,44 +175,83 @@ check_pop_launcher() {
     fi
 }
 
+install_from_git_source() {
+    require_build_tools
+
+    WORK_TMP_DIR=$(mktemp -d)
+    local clone_dir="$WORK_TMP_DIR/shell"
+    local repo_url="https://github.com/${REPO}.git"
+
+    if [ -n "$BRANCH" ]; then
+        echo "Cloning ${REPO} (branch: ${BRANCH})..."
+        git clone --depth 1 --branch "$BRANCH" -- "$repo_url" "$clone_dir"
+    else
+        echo "Cloning ${REPO}..."
+        git clone --depth 1 -- "$repo_url" "$clone_dir"
+    fi
+
+    echo "Building and installing from source..."
+    (cd "$clone_dir" && pnpm install && make install)
+    REPO_ROOT="$clone_dir"
+}
+
+try_install_release() {
+    echo "Checking latest GitHub release for ${REPO}..."
+    local api_response http_status api_body release_url=""
+    api_response=$(curl -sS -w '\n%{http_code}' "https://api.github.com/repos/${REPO}/releases/latest" || true)
+    http_status=$(printf '%s\n' "$api_response" | tail -n 1)
+    api_body=$(printf '%s\n' "$api_response" | sed '$d')
+
+    if [ "$http_status" != "200" ]; then
+        echo "No published GitHub release package found for ${REPO} (HTTP ${http_status:-error})."
+        return 1
+    fi
+
+    release_url=$(printf '%s\n' "$api_body" \
+        | grep -E '"browser_download_url":[[:space:]]*"https://[^"]*\.zip"' \
+        | sed -E 's/.*"([^"]+)".*/\1/' \
+        | head -n 1 || true)
+
+    if [ -z "$release_url" ] || [[ ! "$release_url" =~ ^https://github\.com/ ]]; then
+        echo "Latest GitHub release for ${REPO} does not contain a zip asset."
+        return 1
+    fi
+
+    WORK_TMP_DIR=$(mktemp -d)
+    local zip_path="$WORK_TMP_DIR/$UUID.zip"
+
+    echo "Downloading from $release_url..."
+    curl -fsSL "$release_url" -o "$zip_path"
+
+    echo "Installing extension..."
+    gnome-extensions install --force "$zip_path"
+    rm -rf "$WORK_TMP_DIR"
+    WORK_TMP_DIR=""
+    return 0
+}
+
 install_extension() {
     if [ -n "$REPO_ROOT" ]; then
         echo "Installing from local source at $REPO_ROOT..."
-        if command -v make >/dev/null 2>&1 && command -v pnpm >/dev/null 2>&1; then
-            (cd "$REPO_ROOT" && pnpm install && make install)
-        elif [ -f "$REPO_ROOT/$UUID.zip" ]; then
+        if [ -f "$REPO_ROOT/$UUID.zip" ] && ! command -v make >/dev/null 2>&1; then
             gnome-extensions install --force "$REPO_ROOT/$UUID.zip"
         else
-            echo "Error: Building from source requires make and pnpm."
-            exit 1
+            require_build_tools
+            (cd "$REPO_ROOT" && pnpm install && make install)
         fi
-    else
-        echo "Downloading latest release package..."
-        WORK_TMP_DIR=$(mktemp -d)
-        local zip_path="$WORK_TMP_DIR/$UUID.zip"
-
-        local release_url
-        release_url=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
-            | grep -E '"browser_download_url":[[:space:]]*"https://[^"]*\.zip"' \
-            | sed -E 's/.*"([^"]+)".*/\1/' \
-            | head -n 1 || true)
-
-        if [ -z "$release_url" ] || [[ ! "$release_url" =~ ^https://github\.com/ ]]; then
-            echo "Error: Could not retrieve a valid release URL from GitHub."
-            exit 1
-        fi
-
-        echo "Downloading from $release_url..."
-        curl -fsSL "$release_url" -o "$zip_path"
-
-        echo "Installing extension..."
-        gnome-extensions install --force "$zip_path"
-        rm -rf "$WORK_TMP_DIR"
-        WORK_TMP_DIR=""
+        return 0
     fi
 
-    echo "Enabling $UUID..."
-    gnome-extensions enable "$UUID" 2>/dev/null || true
+    if [ -n "$BRANCH" ]; then
+        echo "Installing requested branch '${BRANCH}' from source..."
+        install_from_git_source
+        return 0
+    fi
+
+    if ! try_install_release; then
+        echo "Falling back to building from source..."
+        install_from_git_source
+    fi
 }
 
 configure_shortcuts() {
@@ -222,6 +283,9 @@ main() {
 
     echo ""
     install_extension
+
+    echo "Enabling $UUID..."
+    gnome-extensions enable "$UUID" 2>/dev/null || true
 
     configure_shortcuts
 
