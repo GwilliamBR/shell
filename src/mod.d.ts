@@ -39,6 +39,50 @@ declare type SignalID = number;
 
 declare module 'resource://*';
 
+declare module 'resource:///org/gnome/shell/ui/popupMenu.js' {
+    export class PopupMenu {
+        actor: St.Widget;
+        constructor(sourceActor: any, arrowAlignment: number, arrowSide: any);
+        addMenuItem(item: any): void;
+        removeAll(): void;
+        toggle(): void;
+        destroy(): void;
+        close(): void;
+    }
+
+    export class PopupMenuItem extends PopupBaseMenuItem {
+        label: St.Label;
+        constructor(text: string);
+    }
+
+    export class PopupBaseMenuItem {
+        add_child(child: Clutter.Actor): void;
+        connect(signal: string, callback: (...args: any[]) => void): SignalID;
+    }
+
+    export class PopupSwitchMenuItem extends PopupBaseMenuItem {
+        label: St.Label;
+        state: boolean;
+        constructor(text: string, active: boolean);
+        setToggleState(state: boolean): void;
+    }
+
+    export class PopupSeparatorMenuItem {
+        constructor(text?: string);
+    }
+}
+
+declare namespace Gio {
+    interface AsyncResult {}
+
+    interface DataInputStream {
+        read_line_async(io_priority: number, cancellable: any, callback: (stdout: DataInputStream, res: AsyncResult) => void): void;
+        read_line_finish(res: AsyncResult): [Uint8Array | null, number];
+        has_pending(): boolean;
+        close(cancellable: any): boolean;
+    }
+}
+
 declare module 'gi://Gio' {
     let Gio: any;
     export default Gio;
@@ -145,6 +189,12 @@ declare interface GLib {
     timeout_add(priority: number, ms: number, callback: () => boolean): number;
 }
 
+declare namespace GLib {
+    interface Error {
+        matches(domain: any, code: number): boolean;
+    }
+}
+
 declare namespace GObject {
     interface Object {
         connect(signal: string, callback: (...args: any) => boolean | void): SignalID;
@@ -203,6 +253,7 @@ declare namespace Clutter {
         ease(params: Object): void;
         hide(): void;
         get_child_at_index(nth: number): Clutter.Actor | null;
+        get_children(): Array<Clutter.Actor>;
         get_n_children(): number;
         get_parent(): Clutter.Actor | null;
         get_stage(): Clutter.Actor | null;
@@ -230,8 +281,19 @@ declare namespace Clutter {
     }
 
     interface Text extends Actor {
+        get_selection(): string | null;
         get_text(): Readonly<string>;
+        set_margin_left(margin: number): void;
         set_text(text: string | null): void;
+        set_x_expand(expand: boolean): void;
+    }
+
+    interface Event {
+        get_button(): number;
+        get_key_symbol(): number;
+        get_source(): Actor | null;
+        get_state(): number;
+        type(): number;
     }
 
     interface Seat extends GObject.Object {
@@ -365,8 +427,8 @@ declare namespace Shell {
 
         addButton(action: DialogButtonAction): void;
 
-        close(timestamp: number): void;
-        open(timestamp: number, on_primary: boolean): void;
+        close(timestamp?: number): void;
+        open(timestamp?: number, on_primary?: boolean): boolean;
 
         setInitialKeyFocus(actor: Clutter.Actor): void;
     }
@@ -374,14 +436,20 @@ declare namespace Shell {
 
 declare namespace St {
     interface Button extends Widget {
+        set_child(child: Clutter.Actor): void;
         set_label(label: string): void;
     }
 
     interface Widget extends Clutter.Actor {
+        hover?: boolean;
+        reactive?: boolean;
+        style_class?: string;
+        track_hover?: boolean;
         add_style_class_name(name: string): void;
         add_style_pseudo_class(name: string): void;
         add(child: St.Widget): void;
         get_theme_node(): any;
+        has_style_class_name(name: string): boolean;
         hide(): void;
         remove_style_class_name(name: string): void;
         remove_style_pseudo_class(name: string): void;
@@ -390,6 +458,20 @@ declare namespace St {
         set_style_pseudo_class(name: string): void;
         show_all(): void;
         show(): void;
+    }
+
+    interface BoxLayout extends Widget {}
+
+    interface ScrollBar extends Widget {
+        track_hover: boolean;
+        reactive: boolean;
+        hover: boolean;
+        get_orientation(): number;
+    }
+
+    interface ScrollView extends Widget {
+        get_vadjustment(): any;
+        set_policy(h: number, v: number): void;
     }
 
     interface Bin extends St.Widget {
@@ -409,5 +491,6 @@ declare namespace St {
 
     interface Label extends Widget {
         text: string;
+        get_clutter_text(): Clutter.Text;
     }
 }

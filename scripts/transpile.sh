@@ -5,6 +5,7 @@ pwd=$(pwd)
 
 # In goes standard JS. Out comes GJS-compatible JS
 transpile() {
+    mkdir -p "$(dirname "${dest}")"
     cp "${src}" "${dest}"
     # cat "${src}" | sed -e 's#export function#function#g' \
     #     -e 's#export var#var#g' \

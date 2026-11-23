@@ -25,6 +25,7 @@ const IFACE: string = `<node>
 export class Service {
     dbus: any;
     id: any;
+    private exported: boolean = false;
 
     FocusLeft: () => void = () => {};
     FocusRight: () => void = () => {};
@@ -40,6 +41,7 @@ export class Service {
 
         const onBusAcquired = (conn: any) => {
             this.dbus.export(conn, '/com/System76/PopShell');
+            this.exported = true;
         };
 
         function onNameAcquired() {}
@@ -57,6 +59,10 @@ export class Service {
     }
 
     destroy() {
+        if (this.exported) {
+            this.dbus.unexport();
+            this.exported = false;
+        }
         Gio.bus_unown_name(this.id);
     }
 }

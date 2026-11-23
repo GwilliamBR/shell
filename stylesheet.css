@@ -1,0 +1,293 @@
+/* ── Active Hint & Overlay ──────────────────────────────────── */
+
+.pop-shell-active-hint {
+    border-style: solid;
+    border-color: #FBB86C;
+    border-radius: var(--active-hint-border-radius, 5px);
+    box-shadow: inset 0 0 0 1px rgba(24, 23, 23, 0);
+}
+
+.pop-shell-overlay {
+    background-color: rgba(53, 132, 228, 0.3);
+}
+
+.pop-shell-border-normal {
+    border-width: 3px;
+}
+
+.pop-shell-border-maximize {
+    border-width: 3px;
+}
+
+/* ── Stacking Tab Bar ───────────────────────────────────────── */
+
+.pop-shell-tab {
+    border: 1px solid #333;
+    color: #000;
+    padding: 0 1em;
+}
+
+.pop-shell-tab-active {
+    background: #FBB86C;
+}
+
+.pop-shell-tab-inactive {
+    background: #9B8E8A;
+}
+
+.pop-shell-tab-urgent {
+    background: #D00;
+}
+
+/* ── Search Dialog (O-Tiling Launcher Design with System Accent) ── */
+
+.pop-shell-search.modal-dialog {
+    background-color: #2b2b2b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.25);
+    padding: 12px 0 12px 12px;
+}
+
+.pop-shell-entry {
+    background-color: #3b3b3b;
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13pt;
+    margin-bottom: 8px;
+    margin-right: 12px;
+    caret-color: #3584e4;
+    outline: none;
+    box-shadow: none;
+}
+
+.pop-shell-entry:focus {
+    border-color: #3584e4;
+    outline: none;
+    box-shadow: none;
+}
+
+.pop-shell-entry:indeterminate {
+    font-style: italic;
+}
+
+.pop-shell-entry StLabel.hint-text {
+    color: rgba(255, 255, 255, 0.45);
+    font-style: italic;
+}
+
+.pop-shell-search-list {
+    max-height: 420px;
+    spacing: 2px;
+    padding-right: 12px;
+}
+
+.pop-shell-scroller StScrollBar {
+    min-width: 3px;
+    padding: 0;
+    transition-duration: 150ms;
+}
+
+.pop-shell-scroller StScrollBar.scrollbar-expanded,
+.pop-shell-scroller StScrollBar.scrollbar-dragging,
+.pop-shell-scroller StScrollBar:hover {
+    min-width: 6px;
+}
+
+.pop-shell-scroller StScrollBar StBin#trough {
+    border-radius: 99px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    transition-duration: 150ms;
+}
+
+.pop-shell-scroller StScrollBar.scrollbar-expanded StBin#trough,
+.pop-shell-scroller StScrollBar.scrollbar-dragging StBin#trough,
+.pop-shell-scroller StScrollBar:hover StBin#trough {
+    border: 2px solid transparent;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.pop-shell-scroller StScrollBar > .vhandle {
+    border-radius: 99px;
+    background-color: #c0bfbc;
+    border: 1px solid transparent;
+    transition-duration: 150ms;
+}
+
+.pop-shell-scroller StScrollBar.scrollbar-expanded > .vhandle,
+.pop-shell-scroller StScrollBar:hover > .vhandle,
+.pop-shell-scroller StScrollBar > .vhandle:hover {
+    background-color: #8e8e93;
+    border: 2px solid transparent;
+}
+
+.pop-shell-scroller StScrollBar.scrollbar-dragging > .vhandle,
+.pop-shell-scroller StScrollBar > .vhandle:active {
+    background-color: #5e5c64;
+    border: 2px solid transparent;
+}
+
+.pop-shell-search-element {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-radius: 8px;
+    color: #EDEDED;
+}
+
+.pop-shell-search-element:hover,
+.pop-shell-search-element:select {
+    background: rgba(246, 246, 246, 0.16);
+    border-radius: 8px;
+    color: #ffffff;
+}
+
+.pop-shell-search-icon {
+    margin-right: 12px;
+}
+
+.pop-shell-search-cat {
+    margin-right: 12px;
+}
+
+.pop-shell-search-title {
+    font-size: 11pt;
+    font-weight: 500;
+}
+
+.pop-shell-search-desc {
+    font-size: 8.5pt;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.pop-shell-search-shortcut {
+    color: rgba(255, 255, 255, 0.55);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    padding: 2px 6px;
+    font-size: 8.5pt;
+    font-weight: bold;
+}
+
+.pop-shell-separator {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.08);
+    margin: 2px 4px;
+}
+
+/* ── Light Mode Overrides ───────────────────────────────────── */
+
+.pop-shell-search.modal-dialog.light {
+    background-color: #f6f6f6;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.12);
+}
+
+.pop-shell-search.light .pop-shell-entry {
+    background-color: #ffffff;
+    color: #393634;
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    outline: none;
+    box-shadow: none;
+}
+
+.pop-shell-search.light .pop-shell-entry:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.pop-shell-search.light .pop-shell-entry StLabel.hint-text {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.pop-shell-search.light .pop-shell-search-element {
+    color: #393634;
+}
+
+.pop-shell-search.light .pop-shell-search-element:hover,
+.pop-shell-search.light .pop-shell-search-element:select {
+    background: rgba(0, 0, 0, 0.08);
+    color: #393634;
+}
+
+.pop-shell-search.light .pop-shell-search-desc {
+    color: rgba(57, 54, 52, 0.65);
+}
+
+.pop-shell-search.light .pop-shell-search-shortcut {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.pop-shell-search.light .pop-shell-separator {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.pop-shell-search.light .pop-shell-scroller StScrollBar.scrollbar-expanded StBin#trough,
+.pop-shell-search.light .pop-shell-scroller StScrollBar.scrollbar-dragging StBin#trough,
+.pop-shell-search.light .pop-shell-scroller StScrollBar:hover StBin#trough {
+    background-color: rgba(0, 0, 0, 0.07);
+}
+
+.pop-shell-search.light .pop-shell-scroller StScrollBar > .vhandle {
+    background-color: #b0afac;
+}
+
+.pop-shell-search.light .pop-shell-scroller StScrollBar.scrollbar-expanded > .vhandle,
+.pop-shell-search.light .pop-shell-scroller StScrollBar:hover > .vhandle,
+.pop-shell-search.light .pop-shell-scroller StScrollBar > .vhandle:hover {
+    background-color: #77767b;
+}
+
+.pop-shell-search.light .pop-shell-scroller StScrollBar.scrollbar-dragging > .vhandle,
+.pop-shell-search.light .pop-shell-scroller StScrollBar > .vhandle:active {
+    background-color: #46454b;
+}
+
+/* ── High Contrast Overrides ────────────────────────────────── */
+
+.pop-shell-search.high-contrast .pop-shell-search-element:hover,
+.pop-shell-search.high-contrast .pop-shell-search-element:select {
+    background: #ffffff;
+    border-radius: 5px;
+    color: #000000;
+}
+
+.pop-shell-search.light.high-contrast .pop-shell-search-element:hover,
+.pop-shell-search.light.high-contrast .pop-shell-search-element:select {
+    background: #000000;
+    color: #ffffff;
+}
+
+/* ── System Accent Colors ───────────────────────────────────── */
+
+.pop-shell-search.accent-blue .pop-shell-entry { caret-color: #3584e4; }
+.pop-shell-search.accent-blue .pop-shell-entry:focus { border-color: #3584e4; }
+
+.pop-shell-search.accent-teal .pop-shell-entry { caret-color: #2190af; }
+.pop-shell-search.accent-teal .pop-shell-entry:focus { border-color: #2190af; }
+
+.pop-shell-search.accent-green .pop-shell-entry { caret-color: #3a944a; }
+.pop-shell-search.accent-green .pop-shell-entry:focus { border-color: #3a944a; }
+
+.pop-shell-search.accent-yellow .pop-shell-entry { caret-color: #c88800; }
+.pop-shell-search.accent-yellow .pop-shell-entry:focus { border-color: #c88800; }
+
+.pop-shell-search.accent-orange .pop-shell-entry { caret-color: #ed5b00; }
+.pop-shell-search.accent-orange .pop-shell-entry:focus { border-color: #ed5b00; }
+
+.pop-shell-search.accent-red .pop-shell-entry { caret-color: #e01b24; }
+.pop-shell-search.accent-red .pop-shell-entry:focus { border-color: #e01b24; }
+
+.pop-shell-search.accent-pink .pop-shell-entry { caret-color: #cd4077; }
+.pop-shell-search.accent-pink .pop-shell-entry:focus { border-color: #cd4077; }
+
+.pop-shell-search.accent-purple .pop-shell-entry { caret-color: #9141ac; }
+.pop-shell-search.accent-purple .pop-shell-entry:focus { border-color: #9141ac; }
+
+.pop-shell-search.accent-slate .pop-shell-entry { caret-color: #6f7783; }
+.pop-shell-search.accent-slate .pop-shell-entry:focus { border-color: #6f7783; }

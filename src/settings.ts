@@ -123,6 +123,16 @@ export class ExtensionSettings {
         return rgba;
     }
 
+    get_system_accent_name(): string {
+        if (!this.int) return 'blue';
+
+        const keys = this.int.list_keys();
+        if (keys && keys.includes('accent-color')) {
+            return this.int.get_string('accent-color') || 'blue';
+        }
+        return 'blue';
+    }
+
     theme(): string {
         return this.shell ? this.shell.get_string('name') : this.int ? this.int.get_string('gtk-theme') : 'Adwaita';
     }
