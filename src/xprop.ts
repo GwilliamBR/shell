@@ -3,6 +3,7 @@ import * as log from './log.js';
 import * as utils from './utils.js';
 
 import Gio from 'gi://Gio';
+import type Meta from 'gi://Meta';
 import { spawn } from 'resource:///org/gnome/shell/misc/util.js';
 
 export var MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
@@ -20,11 +21,11 @@ export function get_window_role(xid: string): string | null {
 }
 
 export function get_frame_extents(xid: string): string | null {
-    let out = xprop_cmd(xid, "_GTK_FRAME_EXTENTS");
+    let out = xprop_cmd(xid, '_GTK_FRAME_EXTENTS');
 
     if (!out) return null;
 
-    return parse_string(out)
+    return parse_string(out);
 }
 
 export function get_hint(xid: string, hint: string): Array<string> | null {

@@ -87,8 +87,8 @@ export class AutoTiler {
         a_win.stack = b_stack;
         b_win.stack = a_stack;
 
-        a_win.meta.get_compositor_private()?.show();
-        b_win.meta.get_compositor_private()?.show();
+        lib.window_actor(a_win.meta)?.show();
+        lib.window_actor(b_win.meta)?.show();
 
         this.tile(ext, a_fork, a_fork.area);
         this.tile(ext, b_fork, b_fork.area);
@@ -436,8 +436,8 @@ export class AutoTiler {
                         ? Left
                         : Right
                     : placement.swap
-                    ? Up
-                    : Down;
+                      ? Up
+                      : Down;
 
             if (stack) {
                 if (matching_stack) {
@@ -749,12 +749,12 @@ export function cursor_placement(ext: Ext, area: Rectangular, cursor: Rectangula
         side === LEFT
             ? [HORIZONTAL, true]
             : side === RIGHT
-            ? [HORIZONTAL, false]
-            : side === TOP
-            ? [VERTICAL, true]
-            : side === BOTTOM
-            ? [VERTICAL, false]
-            : null;
+              ? [HORIZONTAL, false]
+              : side === TOP
+                ? [VERTICAL, true]
+                : side === BOTTOM
+                  ? [VERTICAL, false]
+                  : null;
 
     return res ? { orientation: res[0], swap: res[1] } : null;
 }

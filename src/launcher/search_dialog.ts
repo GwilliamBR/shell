@@ -136,9 +136,10 @@ export class SearchDialog {
     private setup_scrollbar() {
         const vscroll = this.scroller
             .get_children()
-            .find((c) => c instanceof St.ScrollBar && (c as St.ScrollBar).get_orientation() === Clutter.Orientation.VERTICAL) as
-            | St.ScrollBar
-            | undefined;
+            .find(
+                (c) =>
+                    c instanceof St.ScrollBar && (c as St.ScrollBar).get_orientation() === Clutter.Orientation.VERTICAL,
+            ) as St.ScrollBar | undefined;
         if (!vscroll) return;
 
         this.vscroll = vscroll;
@@ -146,9 +147,8 @@ export class SearchDialog {
         vscroll.reactive = true;
         vscroll.opacity = 0;
 
-        const vhandle = vscroll
-            .get_children()
-            .find((c) => (c as St.Widget).has_style_class_name?.('vhandle')) as St.Button | undefined;
+        const vhandle = vscroll.get_children().find((c) => (c as St.Widget).has_style_class_name?.('vhandle')) as
+            St.Button | undefined;
         if (vhandle) {
             vhandle.track_hover = true;
             vhandle.reactive = true;
@@ -380,7 +380,7 @@ export class SearchDialog {
         // The widget may not be allocated yet.
         try {
             ensureActorVisibleInScrollView(this.scroller, widget);
-        } catch (_error) {
+        } catch {
             // Highlight still applies; only the scroll-into-view step is skipped.
         }
     }
@@ -459,11 +459,7 @@ export class SearchDialog {
             return Clutter.EVENT_STOP;
         }
 
-        if (
-            symbol === Clutter.KEY_Return ||
-            symbol === Clutter.KEY_KP_Enter ||
-            symbol === Clutter.KEY_ISO_Enter
-        ) {
+        if (symbol === Clutter.KEY_Return || symbol === Clutter.KEY_KP_Enter || symbol === Clutter.KEY_ISO_Enter) {
             this.activate_id(this.active_id);
             return Clutter.EVENT_STOP;
         }

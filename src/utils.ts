@@ -10,8 +10,9 @@ const { Ok, Err } = result;
 const { Error } = error;
 
 export function is_wayland(): boolean {
-    if (typeof Meta.is_wayland_compositor === 'function') {
-        return Meta.is_wayland_compositor();
+    const meta_compat = Meta as unknown as { is_wayland_compositor?: () => boolean };
+    if (typeof meta_compat.is_wayland_compositor === 'function') {
+        return meta_compat.is_wayland_compositor();
     }
     // GNOME 50+ removed X11 support and Meta.is_wayland_compositor()
     return GLib.getenv('XDG_SESSION_TYPE') !== 'x11';
@@ -61,7 +62,7 @@ export function parse_color(color: string): [number, number, number] | null {
     }
 
     const rgb_match =
-        /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*((?:\d+(?:\.\d+)?|\.\d+))\s*)?\)$/.exec(
+        /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*((?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?)\s*)?\)$/.exec(
             trimmed,
         );
     if (!rgb_match) return null;
@@ -203,10 +204,12 @@ export function os_release(): null | string {
 
 /** Sets the alpha component of a color string (rgba or hex). */
 export function set_alpha(color: string, alpha: number): string {
+    if (!Number.isFinite(alpha)) return color;
     const parsed = parse_color(color);
     if (!parsed) return color;
     const [r, g, b] = parsed;
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    const normalized = Number(Math.min(1, Math.max(0, alpha)).toFixed(6));
+    return `rgba(${r}, ${g}, ${b}, ${normalized})`;
 }
 
 /** Checks if a string is a valid color (hex, rgb, rgba) without GI bindings. */

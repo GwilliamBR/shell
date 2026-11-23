@@ -236,7 +236,7 @@ export class Config {
     static from_json(json: string): Config {
         try {
             return JSON.parse(json);
-        } catch (error) {
+        } catch {
             return new Config();
         }
     }

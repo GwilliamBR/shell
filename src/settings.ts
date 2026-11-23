@@ -5,29 +5,12 @@ import * as utils from './utils.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 
-interface Settings extends GObject.Object {
-    get_boolean(key: string): boolean;
-    set_boolean(key: string, value: boolean): void;
-
-    get_uint(key: string): number;
-    set_uint(key: string, value: number): void;
-
-    get_string(key: string): string;
-    set_string(key: string, value: string): void;
-
-    list_keys(): string[];
-
-    bind(key: string, object: GObject.Object, property: string, flags: any): void;
-}
+type Settings = Gio.Settings;
 
 function settings_new_id(schema_id: string): Settings | null {
     try {
         return new Gio.Settings({ schema_id });
-    } catch (why) {
-        if (schema_id !== 'org.gnome.shell.extensions.user-theme') {
-            // global.log(`failed to get settings for ${schema_id}: ${why}`);
-        }
-
+    } catch {
         return null;
     }
 }
@@ -35,10 +18,17 @@ function settings_new_id(schema_id: string): Settings | null {
 function settings_new_schema(schema: string): Settings {
     const GioSSS = Gio.SettingsSchemaSource;
     const schemaDir = Gio.File.new_for_path(get_current_path()).get_child('schemas');
+    const defaultSource = GioSSS.get_default();
+    const schemaPath = schemaDir.get_path();
 
-    let schemaSource = schemaDir.query_exists(null)
-        ? GioSSS.new_from_directory(schemaDir.get_path(), GioSSS.get_default(), false)
-        : GioSSS.get_default();
+    const schemaSource =
+        schemaDir.query_exists(null) && schemaPath && defaultSource
+            ? GioSSS.new_from_directory(schemaPath, defaultSource, false)
+            : defaultSource;
+
+    if (!schemaSource) {
+        throw new Error('Could not load GSettings schema source for pop-shell.');
+    }
 
     const schemaObj = schemaSource.lookup(schema, true);
 

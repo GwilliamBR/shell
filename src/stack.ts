@@ -4,11 +4,14 @@ import type { ShellWindow } from './window.js';
 
 import * as Ecs from './ecs.js';
 import * as a from './arena.js';
+import * as lib from './lib.js';
 import * as utils from './utils.js';
 
 const Arena = a.Arena;
 import Clutter from 'gi://Clutter';
+import type Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
+import type Meta from 'gi://Meta';
 import St from 'gi://St';
 
 const ACTIVE_TAB = 'pop-shell-tab pop-shell-tab-active';
@@ -46,8 +49,8 @@ const ContainerButton = GObject.registerClass(
         Signals: { activate: {} },
     },
     class ImageButton extends St.Button {
-        _init(icon: St.Icon) {
-            super._init({
+        constructor(icon: St.Icon) {
+            super({
                 child: icon,
                 x_expand: true,
                 y_expand: true,
@@ -65,7 +68,9 @@ const TabButton = GObject.registerClass(
         Signals: { activate: {} },
     },
     class TabButton extends St.Button {
-        _init(window: ShellWindow) {
+        _title: St.Label;
+
+        constructor(window: ShellWindow) {
             const icon = window.icon(window.ext, 24);
             icon.set_x_align(Clutter.ActorAlign.START);
 
@@ -102,7 +107,7 @@ const TabButton = GObject.registerClass(
             container.add_child(label);
             container.add_child(close_button);
 
-            super._init({
+            super({
                 child: container,
                 x_expand: true,
                 y_expand: true,
@@ -230,7 +235,7 @@ export class Stack {
             let name;
 
             this.window_exec(id, component.entity, (window) => {
-                const actor = window.meta.get_compositor_private();
+                const actor = lib.window_actor(window.meta);
 
                 if (Ecs.entity_eq(entity, component.entity)) {
                     this.active_id = id;
@@ -268,7 +273,7 @@ export class Stack {
 
     // returns the tab button border radius based on it's order.
     // Only curving the corners on the edges.
-    private get_tab_border_radius(idx: Number): string {
+    private get_tab_border_radius(idx: number): string {
         let result = `0px 0px 0px 0px`;
 
         // the minus 4px is to accomodate the inner radius being tighter
@@ -332,7 +337,7 @@ export class Stack {
         let settings = this.ext.settings;
         let button = this.buttons.get(tab.button);
         if (button) {
-            let change_id = settings.ext.connect('changed', (_, key) => {
+            let change_id = settings.ext.connect('changed', (_: Gio.Settings, key: string) => {
                 if (key === 'hint-color-rgba') {
                     this.change_tab_color(tab);
                 }
@@ -373,7 +378,7 @@ export class Stack {
         const window = this.ext.windows.get(c.entity);
         if (window) {
             for (const s of c.signals) window.meta.disconnect(s);
-            if (this.workspace === this.ext.active_workspace()) window.meta.get_compositor_private()?.show();
+            if (this.workspace === this.ext.active_workspace()) lib.window_actor(window.meta)?.show();
         }
 
         c.signals = [];
@@ -410,7 +415,7 @@ export class Stack {
             if (this.workspace === this.ext.active_workspace()) {
                 const win = this.ext.windows.get(c.entity);
                 if (win) {
-                    win.meta.get_compositor_private()?.show();
+                    lib.window_actor(win.meta)?.show();
                     win.stack = null;
                 }
             }
@@ -419,7 +424,7 @@ export class Stack {
         for (const b of this.buttons.values()) {
             try {
                 b.destroy();
-            } catch (e) {}
+            } catch {}
         }
 
         if (this.widgets) {
@@ -434,7 +439,8 @@ export class Stack {
             if (Ecs.entity_eq(this.ext.grab_op.entity, this.active)) {
                 if (this.widgets) {
                     const parent = this.widgets.tabs.get_parent();
-                    const actor = this.active_meta()?.get_compositor_private();
+                    const active_meta = this.active_meta();
+                    const actor = active_meta ? lib.window_actor(active_meta) : null;
                     if (actor && parent) {
                         parent.set_child_below_sibling(this.widgets.tabs, actor);
                     }
@@ -523,7 +529,7 @@ export class Stack {
     replace(window: ShellWindow) {
         if (!this.widgets) return;
         const c = this.tabs[this.active_id],
-            actor = window.meta.get_compositor_private();
+            actor = lib.window_actor(window.meta);
         if (c && actor) {
             this.tab_disconnect(c);
 
@@ -547,7 +553,7 @@ export class Stack {
         const window = this.ext.windows.get(this.active);
         if (!window) return;
 
-        const actor = window.meta.get_compositor_private();
+        const actor = lib.window_actor(window.meta);
         if (!actor) {
             this.active_disconnect();
             return;
@@ -664,7 +670,7 @@ export class Stack {
         c.button_signal = widget.connect('clicked', () => {
             this.activate(entity);
             this.window_exec(comp, entity, (window) => {
-                const actor = window.meta.get_compositor_private();
+                const actor = lib.window_actor(window.meta);
                 if (actor) {
                     actor.show();
                     window.activate(false);

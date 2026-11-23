@@ -1,6 +1,7 @@
 import * as log from './log.js';
 
 import Gio from 'gi://Gio';
+import type Meta from 'gi://Meta';
 
 const SchedulerInterface =
     '<node>\
@@ -11,7 +12,13 @@ const SchedulerInterface =
 </interface> \
 </node>';
 
-const SchedulerProxy = Gio.DBusProxy.makeProxyWrapper(SchedulerInterface);
+const SchedulerProxy = Gio.DBusProxy.makeProxyWrapper(SchedulerInterface) as unknown as new (
+    bus: Gio.DBusConnection,
+    name: string,
+    objectPath: string,
+) => {
+    SetForegroundProcessRemote(pid: number, callback: (result: unknown, error: unknown, fds: unknown) => void): void;
+};
 
 const SchedProxy = new SchedulerProxy(Gio.DBus.system, 'com.system76.Scheduler', '/com/system76/Scheduler');
 

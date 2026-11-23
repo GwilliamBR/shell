@@ -28,7 +28,7 @@ export enum Direction {
 }
 
 export class Tiler {
-    private keybindings: Object;
+    private keybindings: Record<string, () => void>;
 
     window: Entity | null = null;
 
@@ -937,7 +937,7 @@ function tile_monitors(rect: Rectangle): Array<Rectangle> {
 
     let workspace = global.workspace_manager.get_active_workspace();
     return Main.layoutManager.monitors
-        .map((_monitor: Rectangle, i: number) => workspace.get_work_area_for_monitor(i))
+        .map((_monitor: unknown, i: number) => Rect.Rectangle.from_meta(workspace.get_work_area_for_monitor(i)))
         .filter((monitor: Rectangle) => {
             return (
                 rect.x + rect.width > monitor.x &&

@@ -10,8 +10,15 @@ import * as config from './config.js';
 
 const WM_CLASS_ID = 'pop-shell-exceptions';
 
+enum EventTag {
+    SelectWindow = 0,
+    SwitchTo = 1,
+    ToggleException = 2,
+    RemoveException = 3,
+}
+
 interface SelectWindow {
-    tag: 0;
+    tag: EventTag.SelectWindow;
 }
 
 enum ViewNum {
@@ -20,19 +27,19 @@ enum ViewNum {
 }
 
 interface SwitchTo {
-    tag: 1;
+    tag: EventTag.SwitchTo;
     view: ViewNum;
 }
 
 interface ToggleException {
-    tag: 2;
+    tag: EventTag.ToggleException;
     wmclass: string | undefined;
     wmtitle: string | undefined;
     enable: boolean;
 }
 
 interface RemoveException {
-    tag: 3;
+    tag: EventTag.RemoveException;
     wmclass: string | undefined;
     wmtitle: string | undefined;
 }
@@ -81,11 +88,11 @@ export class MainView implements View {
     constructor() {
         let select = Gtk.Button.new_with_label('Select');
         select.set_halign(Gtk.Align.CENTER);
-        select.connect('clicked', () => this.callback({ tag: 0 }));
+        select.connect('clicked', () => this.callback({ tag: EventTag.SelectWindow }));
         select.set_margin_bottom(12);
 
         let exceptions = exceptions_button();
-        exceptions.connect('clicked', () => this.callback({ tag: 1, view: ViewNum.Exceptions }));
+        exceptions.connect('clicked', () => this.callback({ tag: EventTag.SwitchTo, view: ViewNum.Exceptions }));
 
         this.list = Gtk.ListBox.new();
         this.list.set_selection_mode(Gtk.SelectionMode.NONE);
@@ -134,7 +141,7 @@ export class MainView implements View {
 
         button.connect('clicked', () => {
             widget.destroy();
-            this.callback({ tag: 3, wmclass, wmtitle });
+            this.callback({ tag: EventTag.RemoveException, wmclass, wmtitle });
         });
 
         this.list.add(widget);
@@ -185,7 +192,7 @@ export class ExceptionsView implements View {
         button.set_valign(Gtk.Align.CENTER);
         button.set_state(enabled);
         button.connect('notify::state', () => {
-            this.callback({ tag: 2, wmclass, wmtitle, enable: button.get_state() });
+            this.callback({ tag: EventTag.ToggleException, wmclass, wmtitle, enable: button.get_state() });
         });
 
         let widget = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 24);
@@ -250,14 +257,12 @@ class App {
 
         let event_handler = (event: Event) => {
             switch (event.tag) {
-                // SelectWindow
-                case 0:
+                case EventTag.SelectWindow:
                     println('SELECT');
                     Gtk.main_quit();
                     break;
 
-                // SwitchTo
-                case 1:
+                case EventTag.SwitchTo:
                     switch (event.view) {
                         case ViewNum.MainView:
                             this.stack.set_visible_child(this.main_view.widget);
@@ -271,15 +276,13 @@ class App {
 
                     break;
 
-                // ToggleException
-                case 2:
+                case EventTag.ToggleException:
                     log(`toggling exception ${event.enable}`);
                     this.config.toggle_system_exception(event.wmclass, event.wmtitle, !event.enable);
                     println('MODIFIED');
                     break;
 
-                // RemoveException
-                case 3:
+                case EventTag.RemoveException:
                     log(`removing exception`);
                     this.config.remove_user_exception(event.wmclass, event.wmtitle);
                     println('MODIFIED');
@@ -289,7 +292,7 @@ class App {
 
         this.main_view.callback = event_handler;
         this.exceptions_view.callback = event_handler;
-        back.connect('clicked', () => event_handler({ tag: 1, view: ViewNum.MainView }));
+        back.connect('clicked', () => event_handler({ tag: EventTag.SwitchTo, view: ViewNum.MainView }));
     }
 }
 

@@ -27,8 +27,9 @@ export default class PopShellPreferences extends ExtensionPreferences {
     getPreferencesWidget() {
         globalThis.popShellExtension = this;
         let dialog = settings_dialog_new();
-        if (dialog.show_all) {
-            dialog.show_all();
+        const legacyDialog = dialog as Gtk.Widget & { show_all?: () => void };
+        if (legacyDialog.show_all) {
+            legacyDialog.show_all();
         } else {
             dialog.show();
         }
@@ -37,7 +38,7 @@ export default class PopShellPreferences extends ExtensionPreferences {
     }
 }
 
-function settings_dialog_new(): Gtk.Container {
+function settings_dialog_new(): Gtk.Widget {
     let [app, grid] = settings_dialog_view();
 
     let ext = new settings.ExtensionSettings();
@@ -126,7 +127,7 @@ function settings_dialog_new(): Gtk.Container {
     return grid;
 }
 
-function settings_dialog_view(): [AppWidgets, Gtk.Container] {
+function settings_dialog_view(): [AppWidgets, Gtk.Widget] {
     const grid = new Gtk.Grid({
         column_spacing: 12,
         row_spacing: 12,

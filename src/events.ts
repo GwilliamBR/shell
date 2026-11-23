@@ -1,5 +1,6 @@
 import * as Window from './window.js';
 
+import type Meta from 'gi://Meta';
 import type { Ext } from './extension.js';
 
 /** Type representing all possible events handled by the extension's system. */

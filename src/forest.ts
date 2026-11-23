@@ -54,7 +54,7 @@ interface Request {
  */
 export class Forest extends Ecs.World {
     /** Maintains a list of top-level forks. */
-    toplevel: Map<String, [Entity, [number, number]]> = new Map();
+    toplevel: Map<string, [Entity, [number, number]]> = new Map();
 
     /** Stores window positions that have been requested. */
     requested: Map<Entity, Request> = new Map();

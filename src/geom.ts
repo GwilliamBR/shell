@@ -1,3 +1,4 @@
+import type Meta from 'gi://Meta';
 import type { Ext } from './extension.js';
 
 export enum Side {

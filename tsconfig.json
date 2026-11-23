@@ -2,13 +2,15 @@
     "version": "1.2.0",
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "es2020",
+        "target": "ES2022",
         "strict": true,
+        "noImplicitAny": true,
+        "skipLibCheck": true,
         "outDir": "./dist",
         "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
         "lib": [
-            "es2020"
+            "ES2022"
         ],
         "pretty": true,
         "removeComments": true,
@@ -20,7 +22,16 @@
         "module": "NodeNext"
     },
     "include": [
+        "src/ambient.d.ts",
+        "src/stubs.d.ts",
         "src/*.ts",
         "src/launcher/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "tests",
+        "src/shortcut_overlay.ts",
+        "src/mod.d.ts"
     ]
 }

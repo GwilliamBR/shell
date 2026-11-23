@@ -247,10 +247,10 @@ function number_entry(
             symbol == 65293 // enter key
                 ? parse_number(text.text)
                 : symbol == 65361 // left key
-                ? clamp(parse_number(text.text) - 1, min, max)
-                : symbol == 65363 // right key
-                ? clamp(parse_number(text.text) + 1, min, max)
-                : null;
+                  ? clamp(parse_number(text.text) - 1, min, max)
+                  : symbol == 65363 // right key
+                    ? clamp(parse_number(text.text) + 1, min, max)
+                    : null;
 
         if (number !== null) {
             text.set_text(String(number));
@@ -342,7 +342,7 @@ function color_selector(ext: Ext, menu: any) {
     color_button.label = '           '; // blank for now
     color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
 
-    settings.ext.connect('changed', (_, key) => {
+    settings.ext.connect('changed', (_: Gio.Settings, key: string) => {
         if (key === 'hint-color-rgba') {
             let color_value = settings.hint_color_rgba();
             color_button.set_style(`background-color: ${color_value}; border: 2px solid lightgray; border-radius: 2px`);

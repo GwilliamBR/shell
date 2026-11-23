@@ -5,6 +5,7 @@ import type { Rectangle } from './rectangle.js';
 
 import Meta from 'gi://Meta';
 import St from 'gi://St';
+import type Clutter from 'gi://Clutter';
 
 export interface SizeHint {
     minimum: [number, number];
@@ -134,7 +135,7 @@ export function maximize(window: Meta.Window): void {
     if (window.maximize.length === 0) {
         window.maximize();
     } else {
-        window.maximize(Meta.MaximizeFlags.BOTH);
+        (window as unknown as { maximize(flags: Meta.MaximizeFlags): void }).maximize(Meta.MaximizeFlags.BOTH);
     }
 }
 
@@ -142,10 +143,15 @@ export function unmaximize(window: Meta.Window): void {
     if (window.unmaximize.length === 0) {
         window.unmaximize();
     } else {
-        window.unmaximize(Meta.MaximizeFlags.BOTH);
+        (window as unknown as { unmaximize(flags: Meta.MaximizeFlags): void }).unmaximize(Meta.MaximizeFlags.BOTH);
     }
 }
 
 export function is_maximized(window: Meta.Window): boolean {
     return window.maximized_horizontally || window.maximized_vertically;
+}
+
+/** Returns the compositor actor for a Meta.Window, typed as Meta.WindowActor. */
+export function window_actor(meta: Meta.Window): Meta.WindowActor | null {
+    return meta.get_compositor_private() as Meta.WindowActor | null;
 }
