@@ -2,15 +2,13 @@
 
 Pop Shell is a keyboard-driven layer for GNOME Shell which allows for quick and sensible navigation and management of windows. The core feature of Pop Shell is advanced tiling window management paired with GNOME Shell.
 
-This fork (`GwilliamBR/shell`) updates Pop Shell for **GNOME Shell 48, 49, 50, and 51 (51.1)** on Wayland, replaces the legacy launcher with the updated implementation from [O-Tiling](https://github.com/oliwebd/o-tiling), consolidates theming into a single `stylesheet.css`, adopts a scriptable installation workflow, and adds strict TypeScript, linting, formatting, unit/integration testing, property-based fuzzing, and CI/SAST checks.
-
 [![](./screenshot.webp)](./screenshot.webp)
 
 ## Table of Contents
 
 - [The Proposal](#the-proposal): Upstreaming tiling concepts into GNOME
 - [The Problem](#the-problem): Why tiling helps in GNOME
-- [Installation](#installation): Installing on GNOME Shell 48 to 51
+- [Installation](#installation): Installing on GNOME Shell 48+
 - [Shared Features](#shared-features): Behaviors shared between floating and auto-tiling modes
 - [Floating Mode](#floating-mode): Behaviors specific to floating mode
 - [Tiling Mode](#tiling-mode): Behaviors specific to auto-tiling mode
@@ -36,7 +34,7 @@ Instead of replacing GNOME Shell with a standalone tiling window manager, Pop Sh
 
 ## Installation
 
-This fork targets **GNOME Shell 48, 49, 50, and 51** (`metadata.json`). See the [INSTALL guide](INSTALL.md) for full distribution instructions and troubleshooting.
+This fork targets **GNOME Shell 48 to 51** (`metadata.json`). See the [INSTALL guide](INSTALL.md) for full distribution instructions and troubleshooting.
 
 ### Quick Install
 
@@ -46,11 +44,11 @@ Run the installer script as your normal user (never with `sudo`):
 curl -fsSL https://raw.githubusercontent.com/GwilliamBR/shell/main/scripts/install.sh | bash
 ```
 
-The installer checks for `pop-launcher`, installs the extension (from the local clone if run inside a repository checkout, or from the latest GitHub release zip), enables `pop-shell@system76.com`, and offers to apply Pop Shell's recommended GNOME keyboard shortcuts via `scripts/configure.sh` when run from a local repository clone.
+The installer checks for `pop-launcher`, installs the extension, enables `pop-shell@system76.com`, and offers to apply Pop Shell's recommended GNOME keyboard shortcuts via `scripts/configure.sh` when run from a local repository clone.
 
 ### Install From Source
 
-Requirements: GNOME Shell 48 to 51, `git`, `make`, `zip`, `glib-compile-schemas`, Node.js, `pnpm`, and `pop-launcher`.
+Requirements: GNOME Shell 48+, `git`, `make`, `zip`, `glib-compile-schemas`, Node.js, `pnpm`, and `pop-launcher`.
 
 ```bash
 git clone https://github.com/GwilliamBR/shell.git
@@ -118,18 +116,17 @@ Pressing `Super` + `<Direction>` moves focus toward the nearest window in that d
 
 ### Launcher
 
-Pop Shell includes an updated launcher derived from O-Tiling that communicates over async JSON IPC with [pop-launcher](https://github.com/pop-os/launcher). Press `Super` + `/` to open it.
+Pop Shell includes a keyboard-driven search and command launcher powered by [pop-launcher](https://github.com/pop-os/launcher).
 
-- `Up` / `Down` or `Ctrl+J` / `Ctrl+K` / `Ctrl+N` / `Ctrl+P`: Move selection
-- `Enter`: Launch or switch to the selected entry
-- `Ctrl` + `1` to `9`: Activate a visible result directly
-- `Tab`: Complete the selected entry
-- `Ctrl` + `q`: Quit the selected application or window
-- `Ctrl` + `c`: Copy the selected result
-- Right click: Open context actions
-- `Esc`: Close the launcher
+Press `Super + /` to open the launcher at the center of the active screen. Press `Esc` to dismiss it.
 
-Type `?` in the launcher input to inspect available plugins and prefixes (such as `=` for calculator, `:` or `t:` to run commands, `/` or `~` for paths, and `find ` for file search).
+### Key Capabilities
+
+- Application Launching: Quickly search and launch desktop applications.
+- Window Switching: Search open windows and switch focus directly to them, even if they reside on a different workspace.
+- Calculations and Commands: Perform instant math calculations, open recent files, or run terminal commands.
+- Plugin Modes: Type `?` in the search bar to inspect all available plugin triggers (such as calculator, files, and commands).
+- GNOME System Integration: Follows the GNOME desktop color scheme (dark and light modes) and matches your chosen system accent color.
 
 ### Inner and Outer Gaps & Window Title Bars
 
@@ -154,12 +151,12 @@ Add window exceptions in `$XDG_CONFIG_HOME/pop-shell/config.json`:
 
 ```json
 {
-  "float": [
-    {
-      "class": "Gnome-control-center",
-      "title": "Optional Window Title"
-    }
-  ]
+    "float": [
+        {
+            "class": "Gnome-control-center",
+            "title": "Optional Window Title"
+        }
+    ]
 }
 ```
 
