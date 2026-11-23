@@ -1,15 +1,10 @@
 #!/usr/bin/gjs --module
 
 import Gio from 'gi://Gio';
+import GioUnix from 'gi://GioUnix?version=2.0';
 import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk?version=3.0';
 import Pango from 'gi://Pango';
-
-/** The directory that this script is executed from. */
-const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack!.split(':')[0].slice(1));
-
-/** Add our directory so we can import modules from it. */
-imports.searchPath.push(SCRIPT_DIR);
 
 import * as config from './config.js';
 
@@ -306,7 +301,7 @@ function list_header_func(row: any, before: null | any) {
 
 /** We'll use stdout for printing events for the shell to handle */
 const STDOUT = new Gio.DataOutputStream({
-    base_stream: new Gio.UnixOutputStream({ fd: 1 }),
+    base_stream: new GioUnix.OutputStream({ fd: 1 }),
 });
 
 /** Utility function for printing a message to stdout with an added newline */

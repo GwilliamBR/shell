@@ -134,7 +134,7 @@ function floating_window_exceptions(ext: Ext, menu: any): any {
 
     let icon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 });
 
-    let widget = new St.BoxLayout({ vertical: false });
+    let widget = new St.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
     widget.add_child(label);
     widget.add_child(icon);
     widget.set_x_expand(true);
@@ -358,10 +358,7 @@ function color_selector(ext: Ext, menu: any) {
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
         let path = get_current_path() + '/color_dialog/main.js';
-        let resp = GLib.spawn_command_line_async(`gjs --module ${path}`);
-        if (!resp) {
-            return null;
-        }
+        spawn(['gjs', '--module', path]);
 
         // clean up and focus on the color dialog
         GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {

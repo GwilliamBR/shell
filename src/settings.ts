@@ -1,7 +1,7 @@
 // const Me = imports.misc.extensionUtils.getCurrentExtension();
 import Gio from 'gi://Gio';
-import Gdk from 'gi://Gdk';
 import { get_current_path } from './paths.js';
+import * as utils from './utils.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 
@@ -14,6 +14,8 @@ interface Settings extends GObject.Object {
 
     get_string(key: string): string;
     set_string(key: string, value: string): void;
+
+    list_keys(): string[];
 
     bind(key: string, object: GObject.Object, property: string, flags: any): void;
 }
@@ -112,7 +114,7 @@ export class ExtensionSettings {
 
     hint_color_rgba() {
         let rgba = this.ext.get_string(HINT_COLOR_RGBA);
-        let valid_color = new Gdk.RGBA().parse(rgba);
+        let valid_color = utils.is_valid_color(rgba);
 
         if (!valid_color) {
             return DEFAULT_RGBA_COLOR;
@@ -126,6 +128,15 @@ export class ExtensionSettings {
     }
 
     is_dark(): boolean {
+        if (this.int) {
+            const keys = this.int.list_keys();
+            if (keys && keys.includes('color-scheme')) {
+                const scheme = this.int.get_string('color-scheme');
+                if (scheme === 'prefer-dark') return true;
+                if (scheme === 'prefer-light') return false;
+            }
+        }
+
         const theme = this.theme().toLowerCase();
         return DARK.some((dark) => theme.includes(dark));
     }
@@ -213,7 +224,7 @@ export class ExtensionSettings {
     }
 
     set_hint_color_rgba(rgba: string) {
-        let valid_color = new Gdk.RGBA().parse(rgba);
+        let valid_color = utils.is_valid_color(rgba);
 
         if (valid_color) {
             this.ext.set_string(HINT_COLOR_RGBA, rgba);

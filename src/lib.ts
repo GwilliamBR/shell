@@ -126,5 +126,26 @@ export function round_to(n: number, digits: number): number {
 }
 
 export function separator(): any {
-    return new St.BoxLayout({ styleClass: 'pop-shell-separator', x_expand: true });
+    return new St.BoxLayout({ style_class: 'pop-shell-separator', x_expand: true });
+}
+
+// GNOME 49+ maximize/unmaximize act on both axes with zero arguments; GNOME 48 expects Meta.MaximizeFlags.
+export function maximize(window: Meta.Window): void {
+    if (window.maximize.length === 0) {
+        window.maximize();
+    } else {
+        window.maximize(Meta.MaximizeFlags.BOTH);
+    }
+}
+
+export function unmaximize(window: Meta.Window): void {
+    if (window.unmaximize.length === 0) {
+        window.unmaximize();
+    } else {
+        window.unmaximize(Meta.MaximizeFlags.BOTH);
+    }
+}
+
+export function is_maximized(window: Meta.Window): boolean {
+    return window.maximized_horizontally || window.maximized_vertically;
 }

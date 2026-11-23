@@ -44,13 +44,7 @@ import Gio from 'gi://Gio';
 import St from 'gi://St';
 import Shell from 'gi://Shell';
 import Meta from 'gi://Meta';
-// Try to import Mtk for newer GNOME versions, fallback to Meta for older versions
-let Mtk: any;
-try {
-    Mtk = imports.gi.Mtk;
-} catch (e) {
-    Mtk = null;
-}
+import Mtk from 'gi://Mtk';
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_keyboard_op, is_resize_op, is_move_op } = Lib;
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -256,6 +250,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.settings.int.connect('changed::gtk-theme', () => {
                 this.register(Events.global(GlobalEvent.GtkThemeChanged));
             });
+
+            if (this.settings.int.list_keys().includes('color-scheme')) {
+                this.settings.int.connect('changed::color-scheme', () => {
+                    this.register(Events.global(GlobalEvent.GtkThemeChanged));
+                });
+            }
         }
 
         if (this.settings.shell) {
@@ -570,7 +570,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 try {
                     const [bytes] = stdout.read_line_finish(res);
                     if (bytes) {
-                        if (event_handler((imports.byteArray.toString(bytes) as string).trim())) {
+                        if (event_handler(new TextDecoder().decode(bytes).trim())) {
                             ipc.stdout.read_line_async(0, ipc.cancellable, generator);
                         }
                     }
@@ -909,10 +909,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             ) {
                 if (prev.rect().contains(win.rect())) {
                     if (prev.is_maximized()) {
-                        prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                        Lib.unmaximize(prev.meta);
                     }
                 } else if (prev.stack) {
-                    prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                    Lib.unmaximize(prev.meta);
                     this.auto_tiler.forest.stacks.get(prev.stack)?.restack();
                 }
             }
@@ -1034,7 +1034,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     compare.is_maximized() &&
                     win.entity[0] !== compare.entity[0]
                 ) {
-                    compare.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                    Lib.unmaximize(compare.meta);
                 }
             }
         }
@@ -1258,9 +1258,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             if (this.auto_tiler) {
                 if (this.is_floating(win)) {
-                    win.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
-                    win.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
-                    win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                    Lib.unmaximize(win.meta);
                 }
 
                 this.register(Events.window_move(this, win, rect));
@@ -1268,7 +1266,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 win.move(this, rect, () => { });
                 // if the resulting dimensions of rect == next
                 if (rect.width == next_area.width && rect.height == next_area.height) {
-                    win.meta.maximize(Meta.MaximizeFlags.BOTH);
+                    Lib.maximize(win.meta);
                 }
             }
         }
@@ -2630,10 +2628,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     cursor_status(): [Rectangle, number] {
         const cursor = cursor_rect();
-        // Use Mtk.Rectangle if available (newer GNOME), otherwise fallback to Meta.Rectangle
-        const rect = Mtk ?
-            new Mtk.Rectangle({ x: cursor.x, y: cursor.y, width: 1, height: 1 }) :
-            new Meta.Rectangle({ x: cursor.x, y: cursor.y, width: 1, height: 1 });
+        const rect = new Mtk.Rectangle({ x: cursor.x, y: cursor.y, width: 1, height: 1 });
         const monitor = display.get_monitor_index_for_rect(rect);
         return [cursor, monitor];
     }
@@ -2758,21 +2753,43 @@ export default class PopShellExtension extends Extension {
     }
 }
 
-const handler = windowAttentionHandler;
+let attention_handler_disabled = false;
 
 function enable_window_attention_handler() {
-    if (handler && !handler._windowDemandsAttentionId) {
-        handler._windowDemandsAttentionId = global.display.connect('window-demands-attention', (display, window) => {
-            handler._onWindowDemandsAttention(display, window);
-        });
+    const handler = windowAttentionHandler;
+    if (!handler || !attention_handler_disabled) return;
+
+    if ('_windowDemandsAttentionId' in handler) {
+        if (!handler._windowDemandsAttentionId) {
+            handler._windowDemandsAttentionId = global.display.connect('window-demands-attention', (display, window) => {
+                handler._onWindowDemandsAttention(display, window);
+            });
+        }
+    } else {
+        (global.display as any).connectObject(
+            'window-demands-attention',
+            handler._onWindowDemandsAttention.bind(handler),
+            'window-marked-urgent',
+            handler._onWindowDemandsAttention.bind(handler),
+            handler,
+        );
     }
+    attention_handler_disabled = false;
 }
 
 function disable_window_attention_handler() {
-    if (handler && handler._windowDemandsAttentionId) {
-        global.display.disconnect(handler._windowDemandsAttentionId);
-        handler._windowDemandsAttentionId = null;
+    const handler = windowAttentionHandler;
+    if (!handler || attention_handler_disabled) return;
+
+    if ('_windowDemandsAttentionId' in handler) {
+        if (handler._windowDemandsAttentionId) {
+            global.display.disconnect(handler._windowDemandsAttentionId);
+            handler._windowDemandsAttentionId = null;
+        }
+    } else {
+        (global.display as any).disconnectObject?.(handler);
     }
+    attention_handler_disabled = true;
 }
 
 function stylesheet_path(name: string) {
@@ -2858,7 +2875,7 @@ function _show_skip_taskbar_windows(ext: Ext) {
         Workspace.prototype._isOverviewWindow = function (win: any) {
             let meta_win = win;
             if (GNOME_VERSION?.startsWith('3.36')) meta_win = win.get_meta_window();
-            return is_valid_minimize_to_tray(meta_win, ext) || default_isoverviewwindow_ws(win);
+            return is_valid_minimize_to_tray(meta_win, ext) || default_isoverviewwindow_ws.call(this, win);
         };
     }
 
@@ -2898,7 +2915,7 @@ function _show_skip_taskbar_windows(ext: Ext) {
         default_isoverviewwindow_ws_thumbnail = WorkspaceThumbnail.prototype._isOverviewWindow;
         WorkspaceThumbnail.prototype._isOverviewWindow = function (win: any) {
             let meta_win = win.get_meta_window();
-            return is_valid_minimize_to_tray(meta_win, ext) || default_isoverviewwindow_ws_thumbnail(win);
+            return is_valid_minimize_to_tray(meta_win, ext) || default_isoverviewwindow_ws_thumbnail.call(this, win);
         };
     }
 

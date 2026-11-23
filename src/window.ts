@@ -11,7 +11,6 @@ import type { Rectangle } from './rectangle.js';
 import * as scheduler from './scheduler.js';
 import * as focus from './focus.js';
 
-import Gdk from 'gi://Gdk';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
@@ -187,20 +186,13 @@ export class ShellWindow {
         const color_value = settings.hint_color_rgba();
 
         if (this.ext.overlay) {
-            const gdk = new Gdk.RGBA();
             // TODO Probably move overlay color/opacity to prefs.js in future,
             // For now mimic the hint color with lower opacity
             const overlay_alpha = 0.3;
             const orig_overlay = 'rgba(53, 132, 228, 0.3)';
-            gdk.parse(color_value);
-
-            if (utils.is_dark(gdk.to_string())) {
-                // too dark, use the blue overlay
-                gdk.parse(orig_overlay);
-            }
-
-            gdk.alpha = overlay_alpha;
-            this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
+            const base_color = utils.is_dark(color_value) ? orig_overlay : color_value;
+            const overlay_color = utils.set_alpha(base_color, overlay_alpha);
+            this.ext.overlay.set_style(`background: ${overlay_color}`);
         }
 
         this.update_border_style();
@@ -251,7 +243,6 @@ export class ShellWindow {
         if (!icon) {
             icon = new St.Icon({
                 icon_name: 'applications-other',
-                icon_type: St.IconType.FULLCOLOR,
                 icon_size: size,
             });
         }
@@ -276,7 +267,7 @@ export class ShellWindow {
     }
 
     is_maximized(): boolean {
-        return this.meta.maximized_horizontally || this.meta.maximized_vertically;
+        return lib.is_maximized(this.meta);
     }
 
     /**
@@ -373,7 +364,7 @@ export class ShellWindow {
 
         if (actor) {
             if (this.is_maximized()) {
-                meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                lib.unmaximize(meta);
             }
             actor.remove_all_transitions();
 

@@ -13,8 +13,8 @@ export function is_wayland(): boolean {
     if (typeof Meta.is_wayland_compositor === 'function') {
         return Meta.is_wayland_compositor();
     }
-    // GNOME 50+ removed X11 support; always Wayland
-    return true;
+    // GNOME 50+ removed X11 support and Meta.is_wayland_compositor()
+    return GLib.getenv('XDG_SESSION_TYPE') !== 'x11';
 }
 
 export function block_signal(object: GObject.Object, signal: SignalID) {
@@ -30,7 +30,7 @@ export function read_to_string(path: string): result.Result<string, error.Error>
     try {
         const [ok, contents] = file.load_contents(null);
         if (ok) {
-            return Ok(imports.byteArray.toString(contents));
+            return Ok(new TextDecoder().decode(contents));
         } else {
             return Err(new Error(`failed to load contents of ${path}`));
         }
@@ -47,33 +47,46 @@ export function exists(path: string): boolean {
     return Gio.File.new_for_path(path).query_exists(null);
 }
 
+/** Parses hex (#RGB, #RGBA, #RRGGBB, #RRGGBBAA) or rgb/rgba color strings into [r, g, b]. */
+export function parse_color(color: string): [number, number, number] | null {
+    const trimmed = color.trim().toLowerCase();
+
+    const hex_match = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/.exec(trimmed);
+    if (hex_match) {
+        const hex = hex_match[1];
+        if (hex.length === 3 || hex.length === 4) {
+            return [parseInt(hex[0] + hex[0], 16), parseInt(hex[1] + hex[1], 16), parseInt(hex[2] + hex[2], 16)];
+        }
+        return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
+    }
+
+    const rgb_match =
+        /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*((?:\d+(?:\.\d+)?|\.\d+))\s*)?\)$/.exec(
+            trimmed,
+        );
+    if (!rgb_match) return null;
+
+    const r = parseInt(rgb_match[1], 10);
+    const g = parseInt(rgb_match[2], 10);
+    const b = parseInt(rgb_match[3], 10);
+    if (r > 255 || g > 255 || b > 255) return null;
+
+    if (rgb_match[4] !== undefined) {
+        const a = parseFloat(rgb_match[4]);
+        if (Number.isNaN(a) || a < 0 || a > 1) return null;
+    }
+
+    return [r, g, b];
+}
+
 /**
  * Parse the current background color's darkness
  * https://stackoverflow.com/a/41491220 - the advanced solution
  * @param color - the RGBA or hex string value
  */
 export function is_dark(color: string): boolean {
-    // 'rgba(251, 184, 108, 1)' - pop orange!
-    let color_val = '';
-    let r = 255;
-    let g = 255;
-    let b = 255;
-
-    // handle rgba(255,255,255,1.0) format
-    if (color.indexOf('rgb') >= 0) {
-        // starts with parsed value from Gdk.RGBA
-        color = color.replace('rgba', 'rgb').replace('rgb(', '').replace(')', ''); // make it 255, 255, 255, 1
-        // log.debug(`util color: ${color}`);
-        let colors = color.split(',');
-        r = parseInt(colors[0].trim());
-        g = parseInt(colors[1].trim());
-        b = parseInt(colors[2].trim());
-    } else if (color.charAt(0) === '#') {
-        color_val = color.substring(1, 7);
-        r = parseInt(color_val.substring(0, 2), 16); // hexToR
-        g = parseInt(color_val.substring(2, 4), 16); // hexToG
-        b = parseInt(color_val.substring(4, 6), 16); // hexToB
-    }
+    const parsed = parse_color(color);
+    const [r, g, b] = parsed ?? [255, 255, 255];
 
     let uicolors = [r / 255, g / 255, b / 255];
     let c = uicolors.map((col) => {
@@ -178,7 +191,7 @@ export function os_release(): null | string {
     const [ok, bytes] = GLib.file_get_contents('/etc/os-release');
     if (!ok) return null;
 
-    const contents: string = imports.byteArray.toString(bytes);
+    const contents: string = new TextDecoder().decode(bytes);
     for (const line of contents.split('\n')) {
         if (line.startsWith('VERSION_ID')) {
             return line.split('"')[1];
@@ -186,4 +199,17 @@ export function os_release(): null | string {
     }
 
     return null;
+}
+
+/** Sets the alpha component of a color string (rgba or hex). */
+export function set_alpha(color: string, alpha: number): string {
+    const parsed = parse_color(color);
+    if (!parsed) return color;
+    const [r, g, b] = parsed;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/** Checks if a string is a valid color (hex, rgb, rgba) without GI bindings. */
+export function is_valid_color(color: string): boolean {
+    return parse_color(color) !== null;
 }

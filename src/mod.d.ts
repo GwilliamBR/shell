@@ -44,6 +44,20 @@ declare module 'gi://Gio' {
     export default Gio;
 }
 
+declare module 'gi://GioUnix?version=2.0' {
+    let GioUnix: any;
+    export default GioUnix;
+}
+
+declare module 'gi://Mtk' {
+    let Mtk: any;
+    export default Mtk;
+}
+
+declare class TextDecoder {
+    decode(input?: Uint8Array): string;
+}
+
 declare module 'gi://St' {
     let St: any;
     export default St;
@@ -69,11 +83,6 @@ declare module 'gi://Gtk' {
     export default Gtk;
 }
 
-declare module 'gi://Gdk' {
-    let Gdk: any;
-    export default Gdk;
-}
-
 declare module 'gi://GObject' {
     let GObject: any;
     export default GObject;
@@ -94,6 +103,7 @@ declare module 'gi://GLib' {
         find_program_in_path(prog: string): string | null;
         get_current_dir(): string;
         get_monotonic_time(): number;
+        getenv(variable: string): string | null;
 
         idle_add(priority: any, callback: () => boolean): number;
 
@@ -107,7 +117,7 @@ declare module 'gi://GLib' {
         timeout_add(priority: number, ms: number, callback: () => boolean): number;
 
         get_user_config_dir(): string;
-        file_get_contents(filename: string): string;
+        file_get_contents(filename: string): [boolean, Uint8Array];
     }
     let gLib: GLib;
     export default gLib;
@@ -306,12 +316,12 @@ declare namespace Meta {
         is_skip_taskbar(): boolean;
         make_above(): void;
         make_fullscreen(): void;
-        maximize(flags: MaximizeFlags): void;
+        maximize(flags?: MaximizeFlags): void;
         move_frame(user_op: boolean, x: number, y: number): void;
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
         skip_taskbar: boolean;
-        unmaximize(flags: any): void;
+        unmaximize(flags?: any): void;
         unminimize(): void;
     }
 

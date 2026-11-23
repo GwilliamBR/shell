@@ -9,10 +9,9 @@ import Gio from 'gi://Gio';
 import Pango from 'gi://Pango';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
-import Gdk from 'gi://Gdk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { ModalDialog } from 'resource:///org/gnome/shell/ui/modalDialog.js';
-import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+import { ensureActorVisibleInScrollView } from 'resource:///org/gnome/shell/misc/animationUtils.js';
 
 const { overview, wm } = Main;
 import { Overview } from 'resource:///org/gnome/shell/ui/overview.js';
@@ -91,15 +90,30 @@ export class Search {
         });
 
         this.text.connect('key-press-event', (_: any, event: any) => {
-            const key = Gdk.keyval_name(Gdk.keyval_to_upper(event.get_key_symbol()));
+            const symbol = event.get_key_symbol();
             const ctrlKey = Boolean(event.get_state() & Clutter.ModifierType.CONTROL_MASK);
 
             const is_down = (): boolean => {
-                return key === 'Down' || (ctrlKey && key === 'J') || (ctrlKey && key === 'N');
+                return (
+                    symbol === Clutter.KEY_Down ||
+                    (ctrlKey &&
+                        (symbol === Clutter.KEY_j ||
+                            symbol === Clutter.KEY_J ||
+                            symbol === Clutter.KEY_n ||
+                            symbol === Clutter.KEY_N))
+                );
             };
 
             const is_up = (): boolean => {
-                return key === 'Up' || key === 'ISO_Left_Tab' || (ctrlKey && key === 'K') || (ctrlKey && key === 'P');
+                return (
+                    symbol === Clutter.KEY_Up ||
+                    symbol === Clutter.KEY_ISO_Left_Tab ||
+                    (ctrlKey &&
+                        (symbol === Clutter.KEY_k ||
+                            symbol === Clutter.KEY_K ||
+                            symbol === Clutter.KEY_p ||
+                            symbol === Clutter.KEY_P))
+                );
             };
 
             // Up arrow or left tab was pressed
@@ -143,13 +157,13 @@ export class Search {
 
             this.last_trigger = global.get_current_time();
 
-            if (key === 'Escape') {
+            if (symbol === Clutter.KEY_Escape) {
                 // Escape key was pressed
                 this.reset();
                 this.close();
                 this.cancel();
                 return;
-            } else if (key === 'Tab') {
+            } else if (symbol === Clutter.KEY_Tab) {
                 // Tab was pressed, check for tab completion
                 this.complete();
                 return;
@@ -159,38 +173,18 @@ export class Search {
                 up_arrow();
             } else if (is_down()) {
                 down_arrow();
-            } else if (ctrlKey && key === '1') {
-                this.activate_id(0);
+            } else if (ctrlKey && symbol >= Clutter.KEY_1 && symbol <= Clutter.KEY_9) {
+                this.activate_id(symbol - Clutter.KEY_1);
                 return;
-            } else if (ctrlKey && key === '2') {
-                this.activate_id(1);
-                return;
-            } else if (ctrlKey && key === '3') {
-                this.activate_id(2);
-                return;
-            } else if (ctrlKey && key === '4') {
-                this.activate_id(3);
-                return;
-            } else if (ctrlKey && key === '5') {
-                this.activate_id(4);
-                return;
-            } else if (ctrlKey && key === '6') {
-                this.activate_id(5);
-                return;
-            } else if (ctrlKey && key === '7') {
-                this.activate_id(6);
-                return;
-            } else if (ctrlKey && key === '8') {
-                this.activate_id(7);
-                return;
-            } else if (ctrlKey && key === '9') {
-                this.activate_id(8);
-                return;
-            } else if (ctrlKey && key === 'Q') {
+            } else if (ctrlKey && (symbol === Clutter.KEY_q || symbol === Clutter.KEY_Q)) {
                 // Ctrl + Q shall quit the selected application
                 this.quit(this.active_id);
                 return;
-            } else if (key === 'Copy' || (ctrlKey && (key === 'C' || key === 'Insert'))) {
+            } else if (
+                symbol === Clutter.KEY_Copy ||
+                (ctrlKey &&
+                    (symbol === Clutter.KEY_c || symbol === Clutter.KEY_C || symbol === Clutter.KEY_Insert))
+            ) {
                 if ((this.text as any).get_selection()) {
                     // If text entry has selected text, behave as normal
                     return;
@@ -206,8 +200,8 @@ export class Search {
         });
 
         this.list = new St.BoxLayout({
-            styleClass: 'pop-shell-search-list',
-            vertical: true,
+            style_class: 'pop-shell-search-list',
+            orientation: Clutter.Orientation.VERTICAL,
         });
 
         const scroller = new St.ScrollView();
@@ -314,7 +308,7 @@ export class Search {
     }
 
     show() {
-        this.dialog.show_all();
+        this.dialog.show();
         this.clear();
         this.entry.grab_key_focus();
     }
@@ -325,7 +319,7 @@ export class Search {
             widget.add_style_pseudo_class('select');
 
             try {
-                Util.ensureActorVisibleInScrollView(this.scroller, widget);
+                ensureActorVisibleInScrollView(this.scroller, widget);
             } catch (_error) {}
         }
     }
@@ -435,7 +429,7 @@ export class SearchOption {
 
         const info_box = new St.BoxLayout({
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             x_expand: true,
         });
         info_box.add_child(label);
