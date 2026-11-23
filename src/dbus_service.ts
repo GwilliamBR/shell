@@ -10,9 +10,6 @@ const IFACE: string = `<node>
     <method name="WindowFocus">
         <arg type="(uu)" direction="in" name="window"/>
     </method>
-    <method name="WindowHighlight">
-        <arg type="(uu)" direction="in" name="window"/>
-    </method>
     <method name="WindowList">
         <arg type="a((uu)sss)" direction="out" name="args"/>
     </method>

@@ -9,39 +9,39 @@ export enum Side {
     CENTER,
 }
 
-export function xend(rect: Rectangular): number {
+function xend(rect: Rectangular): number {
     return rect.x + rect.width;
 }
 
-export function xcenter(rect: Rectangular): number {
+function xcenter(rect: Rectangular): number {
     return rect.x + rect.width / 2;
 }
 
-export function yend(rect: Rectangular): number {
+function yend(rect: Rectangular): number {
     return rect.y + rect.height;
 }
 
-export function ycenter(rect: Rectangular): number {
+function ycenter(rect: Rectangular): number {
     return rect.y + rect.height / 2;
 }
 
-export function center(rect: Rectangular): [number, number] {
+function center(rect: Rectangular): [number, number] {
     return [xcenter(rect), ycenter(rect)];
 }
 
-export function north(rect: Rectangular): [number, number] {
+function north(rect: Rectangular): [number, number] {
     return [xcenter(rect), rect.y];
 }
 
-export function east(rect: Rectangular): [number, number] {
+function east(rect: Rectangular): [number, number] {
     return [xend(rect), ycenter(rect)];
 }
 
-export function south(rect: Rectangular): [number, number] {
+function south(rect: Rectangular): [number, number] {
     return [xcenter(rect), yend(rect)];
 }
 
-export function west(rect: Rectangular): [number, number] {
+function west(rect: Rectangular): [number, number] {
     return [rect.x, ycenter(rect)];
 }
 
@@ -49,17 +49,13 @@ export function distance([ax, ay]: [number, number], [bx, by]: [number, number])
     return Math.sqrt(Math.pow(bx - ax, 2) + Math.pow(by - ay, 2));
 }
 
-export function directional_distance(
+function directional_distance(
     a: Rectangular,
     b: Rectangular,
     fn_a: (rect: Rectangular) => [number, number],
     fn_b: (rect: Rectangular) => [number, number],
 ) {
     return distance(fn_a(a), fn_b(b));
-}
-
-export function window_distance(win_a: Meta.Window, win_b: Meta.Window) {
-    return directional_distance(win_a.get_frame_rect(), win_b.get_frame_rect(), center, center);
 }
 
 export function upward_distance(win_a: Meta.Window, win_b: Meta.Window) {

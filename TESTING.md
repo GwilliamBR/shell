@@ -7,7 +7,13 @@ This document provides a guideline for testing and verifying the expected behavi
 To begin watching logs, open a terminal with the following command:
 
 ```
-journalctl -o cat -n 0 -f "$(which gnome-shell)" | grep -v warning
+pnpm run log
+```
+
+Or follow all GNOME Shell logs directly with:
+
+```
+journalctl -o cat -n 0 -f "$(which gnome-shell)"
 ```
 
 Note that because the logs are from GNOME Shell, there will be messages from all installed extensions, and GNOME Shell itself. Pop Shell is fairly chatty though, so the majority of the logs should be from Pop Shell. Pop Shell logs are usually prepended with `pop-shell:`, but sometimes GNOME has internal errors and warnings surrounding those logs that could be useful for pointing to an issue that we can resolve in Pop Shell.

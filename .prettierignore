@@ -3,6 +3,4 @@ node_modules/
 coverage/
 scratch/
 pnpm-lock.yaml
-src/shortcut_overlay.ts
-src/mod.d.ts
 *.zip

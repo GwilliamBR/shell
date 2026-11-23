@@ -65,11 +65,8 @@ import {
 import { Workspace } from 'resource:///org/gnome/shell/ui/workspace.js';
 import { WorkspaceThumbnail } from 'resource:///org/gnome/shell/ui/workspaceThumbnail.js';
 import { WindowPreview } from 'resource:///org/gnome/shell/ui/windowPreview.js';
-import { PACKAGE_VERSION } from 'resource:///org/gnome/shell/misc/config.js';
 import * as Tags from './tags.js';
 import { get_current_path } from './paths.js';
-
-const GNOME_VERSION = PACKAGE_VERSION;
 
 interface Display {
     area: Rectangle;
@@ -2017,24 +2014,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.register({ tag: 3, window });
         });
 
-        if (GNOME_VERSION?.startsWith('3.')) {
-            this.connect(display, 'grab-op-begin', (_, _display, win, op) => {
-                this.on_grab_start(win, op);
-            });
+        this.connect(display, 'grab-op-begin', (_display, win, op) => {
+            this.on_grab_start(win, op);
+        });
 
-            this.connect(display, 'grab-op-end', (_, _display, win, op) => {
-                this.register_fn(() => this.on_grab_end(win, op));
-            });
-        } else {
-            // GNOME 40 removed the first argument of the callback
-            this.connect(display, 'grab-op-begin', (_display, win, op) => {
-                this.on_grab_start(win, op);
-            });
-
-            this.connect(display, 'grab-op-end', (_display, win, op) => {
-                this.register_fn(() => this.on_grab_end(win, op));
-            });
-        }
+        this.connect(display, 'grab-op-end', (_display, win, op) => {
+            this.register_fn(() => this.on_grab_end(win, op));
+        });
 
         this.connect(overview, 'window-drag-begin', (_, win) => {
             this.on_grab_start(win, 1);
@@ -2792,10 +2778,8 @@ function* iter_workspaces(manager: any): IterableIterator<[number, any]> {
 
 let default_isoverviewwindow_ws: any;
 let default_isoverviewwindow_ws_thumbnail: any;
-let default_init_appswitcher: any;
 let default_getwindowlist_windowswitcher: any;
 let default_getcaption_windowpreview: any;
-let default_getcaption_workspace: any;
 
 /**
  * Decorates the default gnome-shell workspace/overview handling
@@ -2820,41 +2804,21 @@ function _show_skip_taskbar_windows(ext: Ext) {
     if (!default_isoverviewwindow_ws) {
         default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
         Workspace.prototype._isOverviewWindow = function (win: any) {
-            let meta_win = win;
-            if (GNOME_VERSION?.startsWith('3.36')) meta_win = win.get_meta_window();
-            return is_valid_minimize_to_tray(meta_win, ext) || default_isoverviewwindow_ws.call(this, win);
+            return is_valid_minimize_to_tray(win, ext) || default_isoverviewwindow_ws.call(this, win);
         };
     }
 
     // Handle _getCaption errors
-    if (GNOME_VERSION?.startsWith('3.36')) {
-        // imports.ui.windowPreview is not in 3.36,
-        // _getCaption() is still in workspace.js
-        if (!default_getcaption_workspace) {
-            default_getcaption_workspace = (Workspace.prototype as any)._getCaption;
-            // 3.36 _getCaption
-            (Workspace.prototype as any)._getCaption = function (this: any) {
-                let metaWindow = this._windowClone.metaWindow;
-                if (metaWindow.title) return metaWindow.title;
+    if (!default_getcaption_windowpreview) {
+        default_getcaption_windowpreview = (WindowPreview.prototype as any)._getCaption;
+        log.debug(`override workspace._getCaption`);
+        (WindowPreview.prototype as any)._getCaption = function (this: any) {
+            if (this.metaWindow.title) return this.metaWindow.title;
 
-                let tracker = Shell.WindowTracker.get_default();
-                let app = tracker.get_window_app(metaWindow);
-                return app ? app.get_name() : '';
-            };
-        }
-    } else {
-        if (!default_getcaption_windowpreview) {
-            default_getcaption_windowpreview = (WindowPreview.prototype as any)._getCaption;
-            log.debug(`override workspace._getCaption`);
-            // 3.38 _getCaption
-            (WindowPreview.prototype as any)._getCaption = function (this: any) {
-                if (this.metaWindow.title) return this.metaWindow.title;
-
-                let tracker = Shell.WindowTracker.get_default();
-                let app = tracker.get_window_app(this.metaWindow);
-                return app ? app.get_name() : '';
-            };
-        }
+            let tracker = Shell.WindowTracker.get_default();
+            let app = tracker.get_window_app(this.metaWindow);
+            return app ? app.get_name() : '';
+        };
     }
 
     // Handle the workspace thumbnail
@@ -2865,62 +2829,6 @@ function _show_skip_taskbar_windows(ext: Ext) {
             return is_valid_minimize_to_tray(meta_win, ext) || default_isoverviewwindow_ws_thumbnail.call(this, win);
         };
     }
-
-    // let cfg = ext.conf;
-
-    // Handle switch-applications
-    // if (!default_init_appswitcher) {
-    //   default_init_appswitcher = AppSwitcher.prototype._init;
-    //   // Do not use the Shell.AppSystem apps
-    //   AppSwitcher.prototype._init = function (_apps: any, altTabPopup: any) {
-    //     // Simulate super._init(true);
-    //     SwitcherList.prototype._init.call(this, true);
-    //     this.icons = [];
-    //     this._arrows = [];
-
-    //     let windowTracker = Shell.WindowTracker.get_default();
-    //     let settings = new Gio.Settings({ schema_id: 'org.gnome.shell.app-switcher' });
-
-    //     let workspace = null;
-    //     if (settings.get_boolean('current-workspace-only')) {
-    //       let workspaceManager = global.workspace_manager;
-    //       workspace = workspaceManager.get_active_workspace();
-    //     }
-
-    //     let allWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
-    //     // Remove duplicate app names after including skip task bar windows too
-    //     // E.g. Extensions instance plus when opening an extensions prefs window
-    //     // Or Android windows when alt-tabbing (depends on where switch apps is bound)
-    //     let allWindowsWithSkipTaskBar = allWindows.filter((w, i, a) => {
-    //       let app: any = windowTracker.get_window_app(w);
-    //       return (
-    //         i ===
-    //         a.findIndex(wi => {
-    //           let w_app: any = windowTracker.get_window_app(wi);
-    //           return app && w_app ? app.get_name() === w_app.get_name() : false;
-    //         })
-    //       );
-    //     });
-
-    //     // This block collects the windows associated to an app icon
-    //     for (let i = 0; i < allWindowsWithSkipTaskBar.length; i++) {
-    //       let meta_win = allWindowsWithSkipTaskBar[i];
-    //       let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
-    //       if (meta_win.is_skip_taskbar() && !show_skiptb) continue;
-    //       let appIcon = new AppIcon(windowTracker.get_window_app(meta_win));
-    //       appIcon.cachedWindows = allWindows.filter(
-    //         w => windowTracker.get_window_app(w) === appIcon.app
-    //       );
-    //       if (appIcon.cachedWindows.length > 0) this._addIcon(appIcon);
-    //     }
-
-    //     this._curApp = -1;
-    //     this._altTabPopup = altTabPopup;
-    //     this._mouseTimeOutId = 0;
-
-    //     this.connect('destroy', this._onDestroy.bind(this));
-    //   };
-    // }
 
     // Handle switch-windows
     if (!default_getwindowlist_windowswitcher) {
@@ -2967,26 +2875,14 @@ function _hide_skip_taskbar_windows() {
         default_isoverviewwindow_ws = null;
     }
 
-    if (GNOME_VERSION?.startsWith('3.36')) {
-        if (default_getcaption_workspace) {
-            (Workspace.prototype as any)._getCaption = default_getcaption_workspace;
-            default_getcaption_workspace = null;
-        }
-    } else {
-        if (default_getcaption_windowpreview) {
-            (WindowPreview.prototype as any)._getCaption = default_getcaption_windowpreview;
-            default_getcaption_windowpreview = null;
-        }
+    if (default_getcaption_windowpreview) {
+        (WindowPreview.prototype as any)._getCaption = default_getcaption_windowpreview;
+        default_getcaption_windowpreview = null;
     }
 
     if (default_isoverviewwindow_ws_thumbnail) {
         WorkspaceThumbnail.prototype._isOverviewWindow = default_isoverviewwindow_ws_thumbnail;
         default_isoverviewwindow_ws_thumbnail = null;
-    }
-
-    if (default_init_appswitcher) {
-        // AppSwitcher.prototype._init = default_init_appswitcher;
-        default_init_appswitcher = null;
     }
 
     if (default_getwindowlist_windowswitcher) {

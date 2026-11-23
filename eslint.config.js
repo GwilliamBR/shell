@@ -3,14 +3,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
     {
-        ignores: [
-            'dist/**',
-            'node_modules/**',
-            'coverage/**',
-            'scratch/**',
-            'src/shortcut_overlay.ts',
-            'src/mod.d.ts',
-        ],
+        ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'scratch/**'],
     },
     eslint.configs.recommended,
     ...tseslint.configs.recommended,

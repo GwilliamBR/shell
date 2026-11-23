@@ -30,8 +30,7 @@ describe('GNOME Shell 48-51 compatibility', () => {
             return (
                 !rel.startsWith('src/color_dialog/') &&
                 !rel.startsWith('src/floating_exceptions/') &&
-                rel !== 'src/prefs.ts' &&
-                rel !== 'src/shortcut_overlay.ts'
+                rel !== 'src/prefs.ts'
             );
         });
 

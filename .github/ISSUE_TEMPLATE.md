@@ -1,5 +1,5 @@
 <!--
-If this is a bug, please use the template below. If this is a question or general discussion topic, please start a conversation in our chat https://chat.pop-os.org/ or post on our subreddit https://reddit.com/r/pop_os - as those are the proper forums for that type of discussion.
+If this is a bug, please fill in the template below and check GNOME Shell logs via `pnpm run log`.
 -->
 
 **(1) Issue/Bug Description:**
@@ -15,16 +15,16 @@ If this is a bug, please use the template below. If this is a question or genera
 
 
 **(4) Distribution (run `cat /etc/os-release`):**
- 
-
-
-**(5) Gnome Shell version:**
 
 
 
-**(6) Pop Shell version (run `apt policy pop-shell` or provide the latest commit if building locally):**
+**(5) GNOME Shell version:**
+
+
+
+**(6) Pop Shell version (run `gnome-extensions info pop-shell@system76.com` or provide the latest commit if building locally):**
 <!--
-Use triple back ticks ```<value here>``` to paste the apt policy pop-shell value, so it formats nicely
+Use triple back ticks ```<value here>``` to paste the version or commit output so it formats nicely.
 -->
 
 

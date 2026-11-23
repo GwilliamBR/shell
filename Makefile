@@ -113,7 +113,7 @@ uninstall:
 
 ## clean   : Remove build artifacts
 clean:
-	rm -rf $(DIST)/ _build target tsconfig.tsbuildinfo src/color_dialog/tsconfig.tsbuildinfo src/floating_exceptions/tsconfig.tsbuildinfo $(UUID).zip schemas/gschemas.compiled
+	rm -rf $(DIST)/ tsconfig.tsbuildinfo src/color_dialog/tsconfig.tsbuildinfo src/floating_exceptions/tsconfig.tsbuildinfo $(UUID).zip schemas/gschemas.compiled
 
 ## help    : Show this help message
 help:

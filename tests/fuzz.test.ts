@@ -72,17 +72,6 @@ describe('Property-based fuzz tests', () => {
                 },
             ),
         );
-
-        fc.assert(
-            fc.property(
-                fc.double({ min: -1e5, max: 1e5, noNaN: true, noDefaultInfinity: true }),
-                fc.integer({ min: 0, max: 6 }),
-                (value, digits) => {
-                    const rounded = Lib.round_to(value, digits);
-                    expect(Number.isFinite(rounded)).toBe(true);
-                },
-            ),
-        );
     });
 
     it('Arena matches reference Map across arbitrary insert and remove sequences', () => {

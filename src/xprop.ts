@@ -28,7 +28,7 @@ export function get_frame_extents(xid: string): string | null {
     return parse_string(out);
 }
 
-export function get_hint(xid: string, hint: string): Array<string> | null {
+function get_hint(xid: string, hint: string): Array<string> | null {
     let out = xprop_cmd(xid, hint);
 
     if (!out) return null;
@@ -90,7 +90,7 @@ export function may_decorate(xid: string): boolean {
     return hints ? hints[2] == '0x0' || hints[2] == '0x1' : true;
 }
 
-export function motif_hints(xid: string): Array<string> | null {
+function motif_hints(xid: string): Array<string> | null {
     return get_hint(xid, MOTIF_HINTS);
 }
 
