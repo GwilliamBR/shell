@@ -100,7 +100,7 @@ set_keybindings() {
 
 if ! command -v gnome-extensions >/dev/null; then
     echo 'You must install gnome-extensions to configure or enable via this script'
-    '(`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'
+    echo '(`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'
     exit 1
 fi
 
@@ -111,8 +111,8 @@ dconf write /org/gnome/shell/disable-user-extensions false
 
 # Use a window placement behavior which works better for tiling
 
-if gnome-extensions list | grep native-window; then
-    gnome-extensions enable $(gnome-extensions list | grep native-window)
+if gnome-extensions list | grep -q native-window; then
+    gnome-extensions enable "$(gnome-extensions list | grep native-window | head -n 1)"
 fi
 
 # Workspaces spanning displays works better with Pop Shell

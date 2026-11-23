@@ -3,6 +3,17 @@
   "version": "1.2.0",
   "description": "Pop Shell tiling window management extension for GNOME Shell",
   "type": "module",
+  "scripts": {
+    "build": "tsc && tsc -p src/color_dialog && tsc -p src/floating_exceptions && prettier --write 'dist/**/*.js' && node scripts/format-dist.mjs",
+    "type-check": "tsc --noEmit && tsc -p src/color_dialog --noEmit && tsc -p src/floating_exceptions --noEmit",
+    "lint": "eslint src tests",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'",
+    "test": "vitest run",
+    "test:fuzz": "vitest run tests/fuzz.test.ts",
+    "local-install": "make install",
+    "log": "journalctl -f -o cat /usr/bin/gnome-shell | grep -i pop-shell"
+  },
   "packageManager": "pnpm@11.17.0",
   "devDependencies": {
     "@eslint/js": "^10.0.1",

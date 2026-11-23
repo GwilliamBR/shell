@@ -4,7 +4,7 @@
     "compilerOptions": {
         "target": "es2020",
         "strict": true,
-        "outDir": "./target",
+        "outDir": "./dist",
         "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
         "lib": [
@@ -13,12 +13,14 @@
         "pretty": true,
         "removeComments": true,
         "incremental": true,
+        "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "moduleResolution": "NodeNext",
         "module": "NodeNext"
     },
     "include": [
-        "src/*.ts"
+        "src/*.ts",
+        "src/launcher/*.ts"
     ]
 }

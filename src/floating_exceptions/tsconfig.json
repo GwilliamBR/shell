@@ -3,13 +3,14 @@
     "compilerOptions": {
         "target": "es2020",
         // "strict": true,
-        "outDir": "../../target/floating_exceptions",
+        "outDir": "../../dist/floating_exceptions",
         "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
         "lib": ["es2020"],
         "pretty": true,
         "removeComments": true,
-        "incremental": true
+        "incremental": true,
+        "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
     },
     "include": ["src/*.ts"]
 }

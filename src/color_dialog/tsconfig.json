@@ -3,13 +3,14 @@
     "compilerOptions": {
         "target": "es2020",
         "strict": true,
-        "outDir": "../../target/color_dialog",
+        "outDir": "../../dist/color_dialog",
         "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
         "lib": ["es2020"],
         "pretty": true,
         "removeComments": true,
         "incremental": true,
+        "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
         "noUnusedLocals": true,
         "noUnusedParameters": true
     },
