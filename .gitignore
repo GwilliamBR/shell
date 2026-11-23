@@ -1,7 +1,10 @@
 *.zip
 *.swp
 _build
+dist/
 target
+coverage/
+scratch/
 schemas/gschemas.compiled
 debian/*
 !debian/source

@@ -1,3 +1,19 @@
 {
-    "type": "module"
+  "name": "pop-shell",
+  "version": "1.2.0",
+  "description": "Pop Shell tiling window management extension for GNOME Shell",
+  "type": "module",
+  "packageManager": "pnpm@11.17.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@girs/gjs": "4.0.0-rc.13",
+    "@girs/gnome-shell": "^50.0.4",
+    "@types/node": "^25.9.5",
+    "eslint": "^10.8.0",
+    "fast-check": "^4.0.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.0.0"
+  }
 }
